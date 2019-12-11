@@ -12,8 +12,10 @@ WEIGHTS <- read_xlsx("LTA_Community_Cohort_Factors.xlsx", sheet="WEIGHTS")
 
 # Calculate means and standard deviations for weighted factors ------------
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS[, WEIGHTS$FACTOR_NAME], median)[1,])  # Or use median instead?
+WEIGHTS$MED <- unlist(summarize_all(FACTORS[, WEIGHTS$FACTOR_NAME], median)[1,])  # Or use mean instead?
 WEIGHTS$SD <- unlist(summarize_all(FACTORS[, WEIGHTS$FACTOR_NAME], sd)[1,])
+
+WEIGHTS$MED[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP"] <- 0.5  # Force EDA midpoint to 0.5
 
 
 # Use median & s.d. to create approx. deciles -----------------------------
@@ -58,28 +60,31 @@ for (factor in WEIGHTS$FACTOR_NAME) {
 
   # Inspect score distribution
   print(ggplot(FACTORS) +
-    geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
-    geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
-    geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
-    geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
-    geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
-    geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
-    geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
-    geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
-    geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
-    geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
-    labs(x=factor) +
-    theme_classic())
+          geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
+          geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
+          geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
+          geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
+          geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
+          geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
+          geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
+          geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
+          geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
+          geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
+          labs(title="Distribution of factor values (with group breaks)",
+               subtitle=factor,
+               x=factor, y="Number of communities") +
+          theme_classic())
 
   print(ggplot(FACTORS) +
-    geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
-    scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
-    labs(x=score_col) +
-    theme_classic())
+          geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
+          scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
+          labs(title="Communities by factor score", subtitle=score_col,
+               x=score_col, y="Number of communities") +
+          theme_classic())
 }
 
 
-# Calculate overall score -------------------------------------------------
+# Calculate overall score & cohorts ---------------------------------------
 
 FACTORS$SCORE_OVERALL <- rowSums(FACTORS[, wt_score_cols])
 
@@ -88,18 +93,25 @@ min_score <- min(FACTORS$SCORE_OVERALL)
 max_score <- max(FACTORS$SCORE_OVERALL)
 FACTORS <- FACTORS %>%
   mutate(
-    SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_score) / (max_score - min_score) * 100
+    SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_score) / (max_score - min_score) * 100,
+    COHORT = case_when(
+      SCORE_OVERALL_SCALED <= 20 ~ "4",
+      SCORE_OVERALL_SCALED <= 40 ~ "3",
+      SCORE_OVERALL_SCALED <= 60 ~ "2",
+      SCORE_OVERALL_SCALED <= 100 ~ "1"
+    )
   )
 
 ggplot(FACTORS) +
   geom_histogram(aes(x=SCORE_OVERALL_SCALED), color="white", fill="skyblue", binwidth=4, center=2) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+  labs(title="Distribution of updated scores", x="Updated score", y="Number of communities") +
   theme_classic()
 
 
-# Compare scores against the previous scores ------------------------------
+# Compare scores/cohorts against the previous ones ------------------------
 
-PREV_SCORES_CSV <- "S:/AdminGroups/ResearchAnalysis/nmp/LTA/Local_Contribution_Cohort_Tool/data/original_scores_fy20.csv"
+PREV_SCORES_CSV <- "S:/AdminGroups/ResearchAnalysis/nmp/LTA/Community_Cohort_Tool/data/original_scores_fy20.csv"
 PREV_SCORES <- read_csv(PREV_SCORES_CSV, col_types=cols(COHORT=col_character()))
 
 # Rescale from 0-100
@@ -115,7 +127,8 @@ PREV_SCORES <- PREV_SCORES %>%
   )
 
 COMPARE <- FACTORS %>%
-  left_join(PREV_SCORES, by="MUNI")
+  left_join(PREV_SCORES, by="MUNI") %>%
+  mutate(COHORT_CHANGE = as.numeric(COHORT) - as.numeric(COHORT_PREV))
 
 cor(COMPARE$SCORE_PREV_SCALED, COMPARE$SCORE_OVERALL_SCALED)
 
@@ -130,6 +143,19 @@ ggplot(COMPARE) +
   geom_abline(intercept=lm_old_new$coefficients[1], slope=lm_old_new$coefficients[2]) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_color_discrete(name="Previous Cohort") +
-  labs(x="Previous Score", y="Updated Score") +
+  scale_color_discrete(name="Previous cohort") +
+  labs(title="Comparison of updated scores vs. previous scores", x="Previous score", y="Updated score") +
   theme_classic()
+
+ggplot(COMPARE) +
+  geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
+  geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
+  labs(title="Comparison of updated cohorts vs. previous cohorts",
+       x="Cohort", y="Number of communities") +
+  theme_classic() +
+  theme(legend.title=element_blank())
+
+ggplot(COMPARE) +
+  geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+  scale_size_area(max_size = 20) +
+  labs(title="Communities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
