@@ -129,7 +129,7 @@ FACTORS_CCA <- FACTORS_CCA %>%
 chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
 ggplot(FACTORS_CCA) +
   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=5, center=2.5) +
-  geom_vline(aes(color="Chicago overall"), linetype="dashed", xintercept=chi_overall) +
+  geom_vline(linetype="dashed", xintercept=chi_overall) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
   scale_fill_discrete(name="Assigned cohort") +
   labs(title="Distribution of overall scores (CCAs)",
@@ -191,20 +191,12 @@ OUT_DATA_CCA <- FACTORS_CCA %>%
 write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 
 
-# Compare scores/cohorts against the previous ones ------------------------
+# Compare scores/cohorts against previous methodology ---------------------
 
-PREV_SCORES <- read_csv("input/original_scores_fy20.csv", col_types=cols(COHORT=col_character()))
-
-# Rescale from 0-100
-min_score_prev <- min(PREV_SCORES$FINAL_SCORE)
-max_score_prev <- max(PREV_SCORES$FINAL_SCORE)
-PREV_SCORES <- PREV_SCORES %>%
+PREV_SCORES <- read_csv("input/original_scores_fy20.csv", col_types=cols(COHORT=col_character())) %>%
   rename(
     SCORE_PREV = FINAL_SCORE,
     COHORT_PREV = COHORT
-  ) %>%
-  mutate(
-    SCORE_PREV_SCALED = (SCORE_PREV - min_score_prev) / (max_score_prev - min_score_prev) * 100
   )
 
 COMPARE <- FACTORS_MUNI %>%
@@ -214,13 +206,18 @@ COMPARE <- FACTORS_MUNI %>%
     POP = exp(ln_POP)
   )
 
-cor(COMPARE$SCORE_PREV, COMPARE$SCORE_OVERALL_SCALED)
+CHANGED_MUNIS <- COMPARE[COMPARE$COHORT != COMPARE$COHORT_PREV, c("MUNI", "COHORT", "COHORT_PREV", "POP")]
+CHANGED_MUNIS
+
+cat("Correlation (R-squared):", cor(COMPARE$SCORE_PREV, COMPARE$SCORE_OVERALL_SCALED))
+
+lm_old_new <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE)
+cat("Linear trend: SCORE_new = ", lm_old_new$coefficients[1], " + ", lm_old_new$coefficients[2], "*SCORE_old", sep="")
 
 library(modelr)
-lm_old_new <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE)
-lm_old_new
-rmse(lm_old_new, COMPARE)
+cat("Root-mean-square error (RMSE):", rmse(lm_old_new, COMPARE))
 
+# Plots
 ggplot(COMPARE) +
   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
@@ -232,17 +229,17 @@ ggplot(COMPARE) +
   theme_classic()
 
 ggplot(COMPARE) +
+  geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+  scale_size_area(max_size = 20) +
+  labs(title="Communities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
+
+ggplot(COMPARE) +
   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
   labs(title="Comparison of updated cohorts vs. previous cohorts",
        x="Cohort", y="Number of communities") +
   theme_classic() +
   theme(legend.title=element_blank())
-
-ggplot(COMPARE) +
-  geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
-  scale_size_area(max_size = 20) +
-  labs(title="Communities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
 
 COHORT_POP <- COMPARE %>%
   select(COHORT, POP) %>%
@@ -257,8 +254,6 @@ COHORT_POP_PREV <- COMPARE %>%
 COHORT_POP_CHG <- COHORT_POP %>%
   left_join(COHORT_POP_PREV, by=c("COHORT" = "COHORT_PREV"), suffix=c("", "_PREV"))
 
-#View(COMPARE[COMPARE$COHORT != COMPARE$COHORT_PREV, c("MUNI", "COHORT", "COHORT_PREV", "POP")])
-
 ggplot(COHORT_POP_CHG) +
   geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
   geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
@@ -267,19 +262,10 @@ ggplot(COHORT_POP_CHG) +
   theme_classic() +
   theme(legend.title=element_blank())
 
-muni_geo <- st_read("input/cmap_munis.geojson") %>%
+# Map
+muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
   left_join(COMPARE, by=c("GEOID_n"="GEOID"))
-
-tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons(c("COHORT_PREV", "COHORT"), title="", palette="Reds", n=4, border.col="#ffffff",
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-tm_shape(cnty_geo) +
-  tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title=c("Previous cohorts", "Updated cohorts"), frame=FALSE)
 
 tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
