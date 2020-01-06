@@ -19,14 +19,14 @@ library(tmap)
 library(tmaptools)
 ```
 
-This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for most [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
+This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into Community Cohorts, which are then used to determine local contribution levels for most [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
 
-The local contribution requirements by cohort are as follows:
+The baseline local contribution requirement for LTA projects is 20% of the project costs. Reduced contributions are granted to higher-need communities, based on their Community Cohort:
 
-* **Community Cohort 1:** 100% of local contribution (no reduction)
-* **Community Cohort 2:** 75% of local contribution
-* **Community Cohort 3:** 50% of local contribution
-* **Community Cohort 4:** 25% of local contribution
+* **Community Cohort 1:** 100% of baseline local contribution requirement (no reduction)
+* **Community Cohort 2:** 75% of baseline local contribution requirement
+* **Community Cohort 3:** 50% of baseline local contribution requirement
+* **Community Cohort 4:** 25% of baseline local contribution requirement
 
 
 # Load input factors, weights and cohort thresholds
