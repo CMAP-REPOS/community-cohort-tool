@@ -86,14 +86,14 @@ for (factor in WEIGHTS$FACTOR_NAME) {
           geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
           labs(title="Distribution of factor values (with group breaks)",
                subtitle=factor,
-               x=factor, y="Number of communities") +
+               x=factor, y="Number of municipalities") +
           theme_classic())
 
   print(ggplot(FACTORS_MUNI) +
           geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
           scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
           labs(title="Distribution of factor scores", subtitle=score_col,
-               x=score_col, y="Number of communities") +
+               x=score_col, y="Number of municipalities") +
           theme_classic())
 }
 
@@ -117,7 +117,7 @@ ggplot(FACTORS_MUNI) +
   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=5, center=2.5) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
   scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores", x="Overall score", y="Number of communities") +
+  labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities") +
   theme_classic()
 
 FACTORS_CCA <- FACTORS_CCA %>%
@@ -237,7 +237,7 @@ ggplot(COMPARE) +
   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
   labs(title="Comparison of updated cohorts vs. previous cohorts",
-       x="Cohort", y="Number of communities") +
+       x="Cohort", y="Number of municipalities") +
   theme_classic() +
   theme(legend.title=element_blank())
 
