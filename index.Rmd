@@ -19,10 +19,20 @@ library(tmap)
 library(tmaptools)
 ```
 
+This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
+
 
 # Load input factors, weights and cohort thresholds
 
-## Potential factors (municipalities)
+This tool relies on a single Excel file -- located at **input/community_cohort_inputs.xlsx** -- for all of its data and parameters. The file contains 4 sheets, which can be modified as needed to alter the tool:
+
+* `FACTORS_MUNI` -- a table of potential factors to include in the cohort scoring for each municipality
+* `FACTORS_CCA` -- a table of potential factors to include in the cohort scoring for each Chicago Community Area (CCA)
+* `WEIGHTS` -- a table of weights assigned to individual factors present in both `FACTORS_MUNI` and `FACTORS_CCA`; factors omitted from this table (or given a weight of 0) will be excluded from the cohort scoring
+* `COHORTS` -- a table defining the thresholds for assigning communities to cohorts, based on their overall/weighted scores
+
+
+### Potential factors (municipalities)
 
 Load a table of potential factors for each of the 284 municipalities in the CMAP region from the **FACTORS_MUNI** sheet in **input/community_cohort_inputs.xlsx**. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
@@ -31,7 +41,8 @@ FACTORS_MUNI <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_M
 FACTORS_MUNI
 ```
 
-## Potential factors (Chicago Community Areas)
+
+### Potential factors (Chicago Community Areas)
 
 Load a table of potential factors for each of the 77 Chicago Community Areas (CCAs) within the City of Chicago from the **FACTORS_CCA** sheet in **input/community_cohort_inputs.xlsx**. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
@@ -40,7 +51,8 @@ FACTORS_CCA <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_CC
 FACTORS_CCA
 ```
 
-## Weights
+
+### Weights
 
 Load a table of weights for the factors from the **WEIGHTS** sheet in **input/community_cohort_inputs.xlsx**. Factors with non-zero weights will be included in the scoring. The larger the *absolute magnitude* of a factor, the more influence it will have on the overall score. Negative weights should be specified for factors where lower values correspond to lower need (i.e. the lowest values will receive the highest scores).
 
@@ -49,7 +61,8 @@ WEIGHTS <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="WEIGHTS")
 WEIGHTS
 ```
 
-## Cohort thresholds
+
+### Cohort thresholds
 
 Load a table of cohort thresholds from the **COHORTS** sheet in **input/community_cohort_inputs.xlsx**. These will be the maximum overall scores (from a possible range of 0-100) that will be assigned to a particular cohort.
 

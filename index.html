@@ -2787,10 +2787,18 @@ div.tocify {
 </div>
 
 
+<p>This tool is used by the <a href="https://www.cmap.illinois.gov">Chicago Metropolitan Agency for Planning (CMAP)</a> to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for <a href="https://www.cmap.illinois.gov/programs/LTA">Local Technical Assistance</a> projects. The source code and data is hosted in a <a href="https://github.com/CMAP-REPOS/community-cohort-tool">GitHub repository</a>.</p>
 <div id="load-input-factors-weights-and-cohort-thresholds" class="section level1">
 <h1>Load input factors, weights and cohort thresholds</h1>
-<div id="potential-factors-municipalities" class="section level2">
-<h2>Potential factors (municipalities)</h2>
+<p>This tool relies on a single Excel file – located at <strong>input/community_cohort_inputs.xlsx</strong> – for all of its data and parameters. The file contains 4 sheets, which can be modified as needed to alter the tool:</p>
+<ul>
+<li><code>FACTORS_MUNI</code> – a table of potential factors to include in the cohort scoring for each municipality</li>
+<li><code>FACTORS_CCA</code> – a table of potential factors to include in the cohort scoring for each Chicago Community Area (CCA)</li>
+<li><code>WEIGHTS</code> – a table of weights assigned to individual factors present in both <code>FACTORS_MUNI</code> and <code>FACTORS_CCA</code>; factors omitted from this table (or given a weight of 0) will be excluded from the cohort scoring</li>
+<li><code>COHORTS</code> – a table defining the thresholds for assigning communities to cohorts, based on their overall/weighted scores</li>
+</ul>
+<div id="potential-factors-municipalities" class="section level3">
+<h3>Potential factors (municipalities)</h3>
 <p>Load a table of potential factors for each of the 284 municipalities in the CMAP region from the <strong>FACTORS_MUNI</strong> sheet in <strong>input/community_cohort_inputs.xlsx</strong>. This table may include data that are not used in cohort scoring, depending on the contents of the <strong>WEIGHTS</strong> sheet (see below).</p>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -2798,8 +2806,8 @@ div.tocify {
   </script>
 </div>
 </div>
-<div id="potential-factors-chicago-community-areas" class="section level2">
-<h2>Potential factors (Chicago Community Areas)</h2>
+<div id="potential-factors-chicago-community-areas" class="section level3">
+<h3>Potential factors (Chicago Community Areas)</h3>
 <p>Load a table of potential factors for each of the 77 Chicago Community Areas (CCAs) within the City of Chicago from the <strong>FACTORS_CCA</strong> sheet in <strong>input/community_cohort_inputs.xlsx</strong>. This table may include data that are not used in cohort scoring, depending on the contents of the <strong>WEIGHTS</strong> sheet (see below).</p>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -2807,8 +2815,8 @@ div.tocify {
   </script>
 </div>
 </div>
-<div id="weights" class="section level2">
-<h2>Weights</h2>
+<div id="weights" class="section level3">
+<h3>Weights</h3>
 <p>Load a table of weights for the factors from the <strong>WEIGHTS</strong> sheet in <strong>input/community_cohort_inputs.xlsx</strong>. Factors with non-zero weights will be included in the scoring. The larger the <em>absolute magnitude</em> of a factor, the more influence it will have on the overall score. Negative weights should be specified for factors where lower values correspond to lower need (i.e. the lowest values will receive the highest scores).</p>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -2816,8 +2824,8 @@ div.tocify {
   </script>
 </div>
 </div>
-<div id="cohort-thresholds" class="section level2">
-<h2>Cohort thresholds</h2>
+<div id="cohort-thresholds" class="section level3">
+<h3>Cohort thresholds</h3>
 <p>Load a table of cohort thresholds from the <strong>COHORTS</strong> sheet in <strong>input/community_cohort_inputs.xlsx</strong>. These will be the maximum overall scores (from a possible range of 0-100) that will be assigned to a particular cohort.</p>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
