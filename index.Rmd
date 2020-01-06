@@ -160,8 +160,10 @@ for (factor in WEIGHTS$FACTOR_NAME) {
 
   print(ggplot(FACTORS_MUNI) +
           geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
+          geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
           scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
           labs(title="Distribution of factor scores", subtitle=score_col,
+               caption="Dashed line represents a perfect decile distribution of 28.4 municipalities per group",
                x=score_col, y="Number of municipalities") +
           theme_classic())
 }
@@ -208,7 +210,7 @@ ggplot(FACTORS_CCA) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
   scale_fill_discrete(name="Assigned cohort") +
   labs(title="Distribution of overall scores (CCAs)",
-       subtitle="dashed line represents Chicago's overall score",
+       caption="Dashed line represents the overall score for the entire City of Chicago",
        x="Overall score", y="Number of CCAs") +
   theme_classic()
 ```
