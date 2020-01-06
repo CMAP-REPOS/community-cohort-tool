@@ -19,7 +19,14 @@ library(tmap)
 library(tmaptools)
 ```
 
-This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
+This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for most [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
+
+The local contribution requirements by cohort are as follows:
+
+* **Community Cohort 1:** 100% of local contribution (no reduction)
+* **Community Cohort 2:** 75% of local contribution
+* **Community Cohort 3:** 50% of local contribution
+* **Community Cohort 4:** 25% of local contribution
 
 
 # Load input factors, weights and cohort thresholds
@@ -260,21 +267,26 @@ tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
 
 Write overall scores and assigned cohorts for each municipality and CCA in the following files:
 
-* **output/cohort_assignments_muni.csv**
-* **output/cohort_assignments_cca.csv**
+### output/cohort_assignments_muni.csv
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_MUNI <- FACTORS_MUNI %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
+OUT_DATA_MUNI
 
 write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
+```
 
+### output/cohort_assignments_cca.csv
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_CCA <- FACTORS_CCA %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
+OUT_DATA_CCA
 
 write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 ```
