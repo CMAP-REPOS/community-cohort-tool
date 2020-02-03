@@ -31,6 +31,10 @@ The baseline local contribution requirement for LTA projects is 20% of the proje
 
 # Load input factors, weights and cohort thresholds
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+IN_XLSX <- "input/community_cohort_inputs.xlsx"
+```
+
 This tool relies on a single Excel file -- located at **input/community_cohort_inputs.xlsx** -- for all of its data and parameters. The file contains 4 sheets, which can be modified as needed to alter the tool:
 
 * `FACTORS_MUNI` -- a table of potential factors to include in the cohort scoring for each municipality
@@ -44,7 +48,7 @@ This tool relies on a single Excel file -- located at **input/community_cohort_i
 Load a table of potential factors for each of the 284 municipalities in the CMAP region from the **FACTORS_MUNI** sheet in **input/community_cohort_inputs.xlsx**. Any factor whose name starts with `ln_` represents the *natural log* of the factor sharing the rest of the name. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-FACTORS_MUNI <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_MUNI")
+FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
 FACTORS_MUNI
 ```
 
@@ -54,7 +58,7 @@ FACTORS_MUNI
 Load a table of potential factors for each of the 77 Chicago Community Areas (CCAs) within the City of Chicago from the **FACTORS_CCA** sheet in **input/community_cohort_inputs.xlsx**. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-FACTORS_CCA <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_CCA")
+FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
 FACTORS_CCA
 ```
 
@@ -64,7 +68,7 @@ FACTORS_CCA
 Load a table of weights for the factors from the **WEIGHTS** sheet in **input/community_cohort_inputs.xlsx**. Factors with non-zero weights will be included in the scoring. The larger the *absolute magnitude* of a factor, the more influence it will have on the overall score. Negative weights should be specified for factors where lower values correspond to lower need (i.e. the lowest values will receive the highest scores).
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-WEIGHTS <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="WEIGHTS")
+WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 WEIGHTS
 ```
 
@@ -74,7 +78,7 @@ WEIGHTS
 Load a table of cohort thresholds from the **COHORTS** sheet in **input/community_cohort_inputs.xlsx**. These will be the maximum overall scores (from a possible range of 0-100) that will be assigned to a particular cohort.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-COHORTS <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="COHORTS")
+COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 COHORTS
 ```

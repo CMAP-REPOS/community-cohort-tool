@@ -9,10 +9,11 @@ library(tmaptools)
 
 # Load input factors, weights and cohort thresholds -----------------------
 
-FACTORS_MUNI <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_MUNI")
-FACTORS_CCA <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="FACTORS_CCA")
-WEIGHTS <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="WEIGHTS")
-COHORTS <- read_xlsx("input/community_cohort_inputs.xlsx", sheet="COHORTS")
+IN_XLSX <- "input/community_cohort_inputs.xlsx"
+FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
+FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
+WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
+COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
 
