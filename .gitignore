@@ -4,3 +4,5 @@
 .Ruserdata
 packrat/lib*/
 output/Memo*
+output/archive/*
+input/archive/*
