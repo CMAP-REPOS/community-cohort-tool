@@ -6,10 +6,12 @@ library(sf)
 library(tmap)
 library(tmaptools)
 
+COHORT_YEAR <- 2020  # Update this each year!
+IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+
 
 # Load input factors, weights and cohort thresholds -----------------------
 
-IN_XLSX <- "input/community_cohort_inputs.xlsx"
 FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
 FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")

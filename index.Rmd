@@ -17,6 +17,9 @@ library(ggplot2)
 library(sf)
 library(tmap)
 library(tmaptools)
+
+COHORT_YEAR <- 2020  # Update this each year!
+IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
 ```
 
 This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into Community Cohorts, which are then used to determine local contribution levels for most [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
@@ -28,12 +31,10 @@ The baseline local contribution requirement for LTA projects is 20% of the proje
 * **Community Cohort 3:** 50% of baseline local contribution requirement
 * **Community Cohort 4:** 25% of baseline local contribution requirement
 
+The results of the tool summarized below are effective as of April 1, `r COHORT_YEAR`.
+
 
 # Load input factors, weights and cohort thresholds
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-IN_XLSX <- "input/community_cohort_inputs.xlsx"
-```
 
 This tool relies on a single Excel file -- located at **input/community_cohort_inputs.xlsx** -- for all of its data and parameters. The file contains 4 sheets, which can be modified as needed to alter the tool:
 
