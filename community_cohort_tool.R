@@ -199,6 +199,67 @@ OUT_DATA_CCA <- FACTORS_CCA %>%
 write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 
 
+# Tables for memo ---------------------------------------------------------
+
+MEMO_MUNI <- FACTORS_MUNI %>%
+  mutate(
+    POP = exp(ln_POP),
+    TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
+    MED_HH_INC = exp(ln_MED_HH_INC),
+    COHORT_NAME = paste("Cohort", COHORT)
+  ) %>%
+  select(MUNI, COHORT_NAME, SCORE_OVERALL_SCALED, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
+  rename(
+    `Community Name` = MUNI,
+    `Cohort` = COHORT_NAME,
+    `Overall Score` = SCORE_OVERALL_SCALED,
+    `Median Income` = MED_HH_INC,
+    `Population` = POP,
+    `Tax Base Per Capita` = TAX_BASE_PER_CAP,
+    `Population in EDAs` = PCT_EDA_POP
+  )
+
+for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
+  MEMO_MUNI %>%
+    filter(`Cohort` == cohort_name) %>%
+    select(-`Cohort`, -`Overall Score`) %>%
+    write_csv(paste0("output/Memo - Municipalities - ", cohort_name, ".csv"))
+}
+
+MEMO_MUNI %>%
+  select(`Community Name`, `Cohort`, `Overall Score`) %>%
+  write_csv(paste0("output/Memo - Municipalities - All Cohorts - Scores.csv"))
+
+MEMO_CCA <- FACTORS_CCA %>%
+  mutate(
+    POP = exp(ln_POP),
+    TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
+    MED_HH_INC = exp(ln_MED_HH_INC),
+    COHORT_NAME = paste("Cohort", COHORT)
+  ) %>%
+  select(CCA_NAME, COHORT_NAME, SCORE_OVERALL_SCALED, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
+  rename(
+    `Community Name` = CCA_NAME,
+    `Cohort` = COHORT_NAME,
+    `Overall Score` = SCORE_OVERALL_SCALED,
+    `Median Income` = MED_HH_INC,
+    `Population` = POP,  # Using Chicago's population for each CCA to avoid cohort inflation
+    `Tax Base Per Capita` = TAX_BASE_PER_CAP,  # Using hybrid of citywide retail sales per cap + local EAV per cap for CCA tax base per cap
+    `Population in EDAs` = PCT_EDA_POP
+  )
+
+for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
+  MEMO_CCA %>%
+    filter(`Cohort` == cohort_name) %>%
+    select(-`Cohort`, -`Overall Score`, -`Population`, -`Tax Base Per Capita`) %>%
+    write_csv(paste0("output/Memo - CCAs - ", cohort_name, ".csv"))
+}
+
+MEMO_CCA %>%
+  select(`Community Name`, `Cohort`, `Overall Score`) %>%
+  write_csv(paste0("output/Memo - CCAs - All Cohorts - Scores.csv"))
+
+
 # # Compare scores/cohorts against previous methodology ---------------------
 #
 # PREV_SCORES_MUNI <- read_csv("input/previous_scores_muni.csv", col_types=cols(COHORT=col_character())) %>%
@@ -341,65 +402,3 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_legend(legend.position=c("left", "bottom")) +
 # tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE)
-
-
-# Tables for memo ---------------------------------------------------------
-
-MEMO_MUNI <- FACTORS_MUNI %>%
-  mutate(
-    POP = exp(ln_POP),
-    TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
-    MED_HH_INC = exp(ln_MED_HH_INC),
-    COHORT_NAME = paste("Cohort", COHORT)
-  ) %>%
-  select(MUNI, COHORT_NAME, SCORE_OVERALL_SCALED, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
-  rename(
-    `Community Name` = MUNI,
-    `Cohort` = COHORT_NAME,
-    `Overall Score` = SCORE_OVERALL_SCALED,
-    `Median Income` = MED_HH_INC,
-    `Population` = POP,
-    `Tax Base Per Capita` = TAX_BASE_PER_CAP,
-    `Population in EDAs` = PCT_EDA_POP
-  )
-
-for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
-  MEMO_MUNI %>%
-    filter(`Cohort` == cohort_name) %>%
-    select(-`Cohort`, -`Overall Score`) %>%
-    write_csv(paste0("output/Memo - Municipalities - ", cohort_name, ".csv"))
-}
-
-MEMO_MUNI %>%
-  select(`Community Name`, `Cohort`, `Overall Score`) %>%
-  write_csv(paste0("output/Memo - Municipalities - All Cohorts - Scores.csv"))
-
-MEMO_CCA <- FACTORS_CCA %>%
-  mutate(
-    POP = exp(ln_POP),
-    TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
-    MED_HH_INC = exp(ln_MED_HH_INC),
-    COHORT_NAME = paste("Cohort", COHORT)
-  ) %>%
-  select(CCA_NAME, COHORT_NAME, SCORE_OVERALL_SCALED, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
-  rename(
-    `Community Name` = CCA_NAME,
-    `Cohort` = COHORT_NAME,
-    `Overall Score` = SCORE_OVERALL_SCALED,
-    `Median Income` = MED_HH_INC,
-    `Population` = POP,  # Still using entire city's population for each CCA
-    `Tax Base Per Capita` = TAX_BASE_PER_CAP,  # Still using entire city's TB/C for each CCA
-    `Population in EDAs` = PCT_EDA_POP
-  )
-
-for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
-  MEMO_CCA %>%
-    filter(`Cohort` == cohort_name) %>%
-    select(-`Cohort`, -`Overall Score`, -`Population`, -`Tax Base Per Capita`) %>%
-    write_csv(paste0("output/Memo - CCAs - ", cohort_name, ".csv"))
-}
-
-MEMO_CCA %>%
-  select(`Community Name`, `Cohort`, `Overall Score`) %>%
-  write_csv(paste0("output/Memo - CCAs - All Cohorts - Scores.csv"))
-
