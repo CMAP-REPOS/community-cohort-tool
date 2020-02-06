@@ -199,148 +199,148 @@ OUT_DATA_CCA <- FACTORS_CCA %>%
 write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 
 
-# Compare scores/cohorts against previous methodology ---------------------
-
-PREV_SCORES_MUNI <- read_csv("input/original_scores_fy20_muni.csv", col_types=cols(COHORT=col_character())) %>%
-  rename(
-    SCORE_PREV = FINAL_SCORE,
-    COHORT_PREV = COHORT
-  )
-
-PREV_SCORES_CCA <- read_csv("input/original_scores_fy20_cca.csv", col_types=cols(COHORT=col_character())) %>%
-  rename(
-    SCORE_PREV = FINAL_SCORE,
-    COHORT_PREV = COHORT
-  )
-
-COMPARE_MUNI <- FACTORS_MUNI %>%
-  left_join(PREV_SCORES_MUNI, by="MUNI") %>%
-  mutate(
-    COHORT_CHG = as.numeric(COHORT) - as.numeric(COHORT_PREV),
-    POP = exp(ln_POP)
-  )
-
-COMPARE_CCA <- FACTORS_CCA %>%
-  left_join(PREV_SCORES_CCA, by="CCA_NAME") %>%
-  mutate(
-    COHORT_CHG = as.numeric(COHORT) - as.numeric(COHORT_PREV)
-  )
-
-CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$COHORT != COMPARE_MUNI$COHORT_PREV, c("MUNI", "SCORE_OVERALL_SCALED", "COHORT", "COHORT_PREV", "POP")]
-CHANGED_MUNIS
-
-CHANGED_CCAS <- COMPARE_CCA[COMPARE_CCA$COHORT != COMPARE_CCA$COHORT_PREV, c("CCA_NAME", "SCORE_OVERALL_SCALED", "COHORT", "COHORT_PREV")]
-CHANGED_CCAS
-
-# Descriptive statistics
-library(modelr)
-
-cat("MUNICIPALITIES")
-lm_muni <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE_MUNI)
-cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE_OVERALL_SCALED))
-cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
-cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
-
-cat("CHICAGO COMMUNITY AREAS")
-lm_cca <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE_CCA)
-cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE_OVERALL_SCALED))
-cat("Linear trend: SCORE_new = ", lm_cca$coefficients[1], " + ", lm_cca$coefficients[2], "*SCORE_old", sep="")
-cat("Root-mean-square error (RMSE):", rmse(lm_cca, COMPARE_MUNI))
-
-# Plots
-ggplot(COMPARE_MUNI) +
-  geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
-  geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-  geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_color_discrete(name="Previous cohort") +
-  labs(title="Comparison of updated scores vs. previous scores (municipalities)", x="Previous score", y="Updated score") +
-  theme_classic()
-
-ggplot(COMPARE_CCA) +
-  geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
-  geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-  geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_color_discrete(name="Previous cohort") +
-  labs(title="Comparison of updated scores vs. previous scores (CCAs)", x="Previous score", y="Updated score") +
-  theme_classic()
-
-ggplot(COMPARE_MUNI) +
-  geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
-  scale_size_area(max_size = 20) +
-  labs(title="Municipalities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
-
-ggplot(COMPARE_CCA) +
-  geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
-  scale_size_area(max_size = 20) +
-  labs(title="CCAs by previous and updated cohort", x="Previous cohort", y="Updated cohort")
-
-ggplot(COMPARE_MUNI) +
-  geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
-  geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-  labs(title="Comparison of updated cohorts vs. previous cohorts (municipalities)",
-       x="Cohort", y="Number of municipalities") +
-  theme_classic() +
-  theme(legend.title=element_blank())
-
-ggplot(COMPARE_CCA) +
-  geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
-  geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-  labs(title="Comparison of updated cohorts vs. previous cohorts (CCAs)",
-       x="Cohort", y="Number of CCAs") +
-  theme_classic() +
-  theme(legend.title=element_blank())
-
-COHORT_POP <- COMPARE_MUNI %>%
-  select(COHORT, POP) %>%
-  group_by(COHORT) %>%
-  summarize(POP = sum(POP))
-
-COHORT_POP_PREV <- COMPARE_MUNI %>%
-  select(COHORT_PREV, POP) %>%
-  group_by(COHORT_PREV) %>%
-  summarize(POP = sum(POP))
-
-COHORT_POP_CHG <- COHORT_POP %>%
-  left_join(COHORT_POP_PREV, by=c("COHORT" = "COHORT_PREV"), suffix=c("", "_PREV"))
-
-ggplot(COHORT_POP_CHG) +
-  geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
-  geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
-  labs(title="Comparison of population in updated cohorts vs. previous cohorts (municipalities)",
-       x="Cohort", y="Total population") +
-  theme_classic() +
-  theme(legend.title=element_blank())
-
-# Maps
-muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
-  st_transform(IL_E_NAD83) %>%
-  left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
-
-cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
-  st_transform(IL_E_NAD83) %>%
-  left_join(COMPARE_CCA, by=c("CCA_NUM"="CCA_ID"))
-
-tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
-              midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-              labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
-tm_shape(cnty_geo) +
-  tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE)
-
-tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
-              midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-              labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE)
+# # Compare scores/cohorts against previous methodology ---------------------
+#
+# PREV_SCORES_MUNI <- read_csv("input/previous_scores_muni.csv", col_types=cols(COHORT=col_character())) %>%
+#   rename(
+#     SCORE_PREV = FINAL_SCORE,
+#     COHORT_PREV = COHORT
+#   )
+#
+# PREV_SCORES_CCA <- read_csv("inputprevious_scores_cca.csv", col_types=cols(COHORT=col_character())) %>%
+#   rename(
+#     SCORE_PREV = FINAL_SCORE,
+#     COHORT_PREV = COHORT
+#   )
+#
+# COMPARE_MUNI <- FACTORS_MUNI %>%
+#   left_join(PREV_SCORES_MUNI, by="MUNI") %>%
+#   mutate(
+#     COHORT_CHG = as.numeric(COHORT) - as.numeric(COHORT_PREV),
+#     POP = exp(ln_POP)
+#   )
+#
+# COMPARE_CCA <- FACTORS_CCA %>%
+#   left_join(PREV_SCORES_CCA, by="CCA_NAME") %>%
+#   mutate(
+#     COHORT_CHG = as.numeric(COHORT) - as.numeric(COHORT_PREV)
+#   )
+#
+# CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$COHORT != COMPARE_MUNI$COHORT_PREV, c("MUNI", "SCORE_OVERALL_SCALED", "COHORT", "COHORT_PREV", "POP")]
+# CHANGED_MUNIS
+#
+# CHANGED_CCAS <- COMPARE_CCA[COMPARE_CCA$COHORT != COMPARE_CCA$COHORT_PREV, c("CCA_NAME", "SCORE_OVERALL_SCALED", "COHORT", "COHORT_PREV")]
+# CHANGED_CCAS
+#
+# # Descriptive statistics
+# library(modelr)
+#
+# cat("MUNICIPALITIES")
+# lm_muni <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE_MUNI)
+# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE_OVERALL_SCALED))
+# cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
+# cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
+#
+# cat("CHICAGO COMMUNITY AREAS")
+# lm_cca <- lm(SCORE_OVERALL_SCALED ~ SCORE_PREV, data=COMPARE_CCA)
+# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE_OVERALL_SCALED))
+# cat("Linear trend: SCORE_new = ", lm_cca$coefficients[1], " + ", lm_cca$coefficients[2], "*SCORE_old", sep="")
+# cat("Root-mean-square error (RMSE):", rmse(lm_cca, COMPARE_MUNI))
+#
+# # Plots
+# ggplot(COMPARE_MUNI) +
+#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
+#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
+#   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   scale_color_discrete(name="Previous cohort") +
+#   labs(title="Comparison of updated scores vs. previous scores (municipalities)", x="Previous score", y="Updated score") +
+#   theme_classic()
+#
+# ggplot(COMPARE_CCA) +
+#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
+#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
+#   geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   scale_color_discrete(name="Previous cohort") +
+#   labs(title="Comparison of updated scores vs. previous scores (CCAs)", x="Previous score", y="Updated score") +
+#   theme_classic()
+#
+# ggplot(COMPARE_MUNI) +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+#   scale_size_area(max_size = 20) +
+#   labs(title="Municipalities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
+#
+# ggplot(COMPARE_CCA) +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+#   scale_size_area(max_size = 20) +
+#   labs(title="CCAs by previous and updated cohort", x="Previous cohort", y="Updated cohort")
+#
+# ggplot(COMPARE_MUNI) +
+#   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
+#   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
+#   labs(title="Comparison of updated cohorts vs. previous cohorts (municipalities)",
+#        x="Cohort", y="Number of municipalities") +
+#   theme_classic() +
+#   theme(legend.title=element_blank())
+#
+# ggplot(COMPARE_CCA) +
+#   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
+#   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
+#   labs(title="Comparison of updated cohorts vs. previous cohorts (CCAs)",
+#        x="Cohort", y="Number of CCAs") +
+#   theme_classic() +
+#   theme(legend.title=element_blank())
+#
+# COHORT_POP <- COMPARE_MUNI %>%
+#   select(COHORT, POP) %>%
+#   group_by(COHORT) %>%
+#   summarize(POP = sum(POP))
+#
+# COHORT_POP_PREV <- COMPARE_MUNI %>%
+#   select(COHORT_PREV, POP) %>%
+#   group_by(COHORT_PREV) %>%
+#   summarize(POP = sum(POP))
+#
+# COHORT_POP_CHG <- COHORT_POP %>%
+#   left_join(COHORT_POP_PREV, by=c("COHORT" = "COHORT_PREV"), suffix=c("", "_PREV"))
+#
+# ggplot(COHORT_POP_CHG) +
+#   geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
+#   geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
+#   labs(title="Comparison of population in updated cohorts vs. previous cohorts (municipalities)",
+#        x="Cohort", y="Total population") +
+#   theme_classic() +
+#   theme(legend.title=element_blank())
+#
+# # Maps
+# muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
+#   st_transform(IL_E_NAD83) %>%
+#   left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
+#
+# cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
+#   st_transform(IL_E_NAD83) %>%
+#   left_join(COMPARE_CCA, by=c("CCA_NUM"="CCA_ID"))
+#
+# tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
+#               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+# tm_shape(cnty_geo) +
+#   tm_lines(col="#888888", lwd=2) +
+# tm_shape(muni_labels) +
+#   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# tm_legend(legend.position=c("left", "bottom")) +
+# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE)
+#
+# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
+#               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+# tm_legend(legend.position=c("left", "bottom")) +
+# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE)
 
 
 # Tables for memo ---------------------------------------------------------
