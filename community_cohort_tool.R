@@ -207,7 +207,7 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #     COHORT_PREV = COHORT
 #   )
 #
-# PREV_SCORES_CCA <- read_csv("inputprevious_scores_cca.csv", col_types=cols(COHORT=col_character())) %>%
+# PREV_SCORES_CCA <- read_csv("input/previous_scores_cca.csv", col_types=cols(COHORT=col_character())) %>%
 #   rename(
 #     SCORE_PREV = FINAL_SCORE,
 #     COHORT_PREV = COHORT
