@@ -40,7 +40,7 @@ WEIGHTS <- WEIGHTS %>%
   )
 
 # Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
-WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- seq(0.1, 0.9, 0.1)
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
 
 
 # Calculate factor-specific scores ----------------------------------------
@@ -76,30 +76,34 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   FACTORS_CCA[, wt_score_col] <- FACTORS_CCA[, score_col] * abs(weight)
 
   # Inspect score distribution
-  print(ggplot(FACTORS_MUNI) +
-          geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
-          geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
-          geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
-          geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
-          geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
-          geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
-          geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
-          geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
-          geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
-          geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
-          labs(title="Distribution of factor values (with group breaks)",
-               subtitle=factor,
-               x=factor, y="Number of municipalities") +
-          theme_classic())
+  print(
+    ggplot(FACTORS_MUNI) +
+      geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
+      geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
+      geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
+      geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
+      geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
+      geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
+      geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
+      geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
+      labs(title="Distribution of factor values (with group breaks)",
+           subtitle=factor,
+           x=factor, y="Number of municipalities") +
+      theme_classic()
+  )
 
-  print(ggplot(FACTORS_MUNI) +
-          geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
-          geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
-          scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
-          labs(title="Distribution of factor scores", subtitle=score_col,
-               caption="Dashed line represents a perfect decile distribution of 28.4 municipalities per group",
-               x=score_col, y="Number of municipalities") +
-          theme_classic())
+  print(
+    ggplot(FACTORS_MUNI) +
+      geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
+      geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
+      scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
+      labs(title="Distribution of factor scores", subtitle=score_col,
+           caption="Dashed line represents a perfect decile distribution of 28.4 municipalities per group",
+           x=score_col, y="Number of municipalities") +
+      theme_classic()
+  )
 }
 
 
