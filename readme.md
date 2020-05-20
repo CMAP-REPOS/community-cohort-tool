@@ -1,4 +1,4 @@
-# Community Cohort Tool
+# Community Cohort Evaluation Tool
 
 This repository contains an R tool used by the [Chicago Metropolitan Agency for Planning](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into cohorts, which are then used to determine local contribution levels for [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects.
 
