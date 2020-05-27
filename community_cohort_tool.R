@@ -8,6 +8,7 @@ library(tmaptools)
 
 COHORT_YEAR <- 2020  # Update this each year!
 IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+COOK_MUNIS_CSV <- "input/cook_munis.csv"  # CSV of Cook County munis, with GEOID
 
 
 # Load input factors, weights and cohort thresholds -----------------------
@@ -19,10 +20,20 @@ COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
 
+# Create boolean indicator for Cook munis ---------------------------------
+
+COOK_MUNIS <- read_csv(COOK_MUNIS_CSV) %>%
+  mutate(IN_COOK = TRUE) %>%
+  select(GEOID, IN_COOK)
+FACTORS_MUNI <- FACTORS_MUNI %>%
+  left_join(COOK_MUNIS, by="GEOID") %>%
+  mutate(IN_COOK = if_else(is.na(IN_COOK), FALSE, TRUE))
+
+
 # Calculate factor-specific scoring thresholds ----------------------------
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd)[1,])
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm=TRUE)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm=TRUE)[1,])
 
 WEIGHTS <- WEIGHTS %>%
   mutate(
@@ -45,10 +56,10 @@ WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- as.list(seq(0
 
 # Calculate factor-specific scores ----------------------------------------
 
-keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
-keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
+keep_cols_muni <- append(c("GEOID", "MUNI", "IN_COOK"), WEIGHTS$FACTOR_NAME)
+#keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
 FACTORS_MUNI <- FACTORS_MUNI[, keep_cols_muni]
-FACTORS_CCA <- FACTORS_CCA[, keep_cols_cca]
+#FACTORS_CCA <- FACTORS_CCA[, keep_cols_cca]
 
 score_cols <- c()
 wt_score_cols <- c()
@@ -66,14 +77,14 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
     select(starts_with("CUT"))
   groups <- c(1:10)
   FACTORS_MUNI[, score_col] <- cut(as.matrix(FACTORS_MUNI[, factor]), cuts, groups, labels=FALSE)
-  FACTORS_CCA[, score_col] <- cut(as.matrix(FACTORS_CCA[, factor]), cuts, groups, labels=FALSE)
+  #FACTORS_CCA[, score_col] <- cut(as.matrix(FACTORS_CCA[, factor]), cuts, groups, labels=FALSE)
   if (weight < 0) {
     # Reverse score order for factors with negative weights
     FACTORS_MUNI[, score_col] <-  max(groups) + 1 - FACTORS_MUNI[, score_col]
-    FACTORS_CCA[, score_col] <-  max(groups) + 1 - FACTORS_CCA[, score_col]
+    #FACTORS_CCA[, score_col] <-  max(groups) + 1 - FACTORS_CCA[, score_col]
   }
   FACTORS_MUNI[, wt_score_col] <- FACTORS_MUNI[, score_col] * abs(weight)
-  FACTORS_CCA[, wt_score_col] <- FACTORS_CCA[, score_col] * abs(weight)
+  #FACTORS_CCA[, wt_score_col] <- FACTORS_CCA[, score_col] * abs(weight)
 
   # Inspect score distribution
   print(
@@ -110,7 +121,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
 # Calculate overall score & cohorts ---------------------------------------
 
 FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
-FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
+#FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
 
 # Rescale from 0-100
 min_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 1
@@ -132,22 +143,22 @@ ggplot(FACTORS_MUNI) +
   labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities") +
   theme_classic()
 
-FACTORS_CCA <- FACTORS_CCA %>%
-  mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_CCA$COHORT <- cut(as.matrix(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_CCA <- FACTORS_CCA %>%
-  mutate(COHORT = fct_relevel(COHORT, sort))
-
-chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
-ggplot(FACTORS_CCA) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
-  geom_vline(linetype="dashed", xintercept=chi_overall) +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores (CCAs)",
-       caption="Dashed line represents the overall score for the entire City of Chicago",
-       x="Overall score", y="Number of CCAs") +
-  theme_classic()
+# FACTORS_CCA <- FACTORS_CCA %>%
+#   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
+# FACTORS_CCA$COHORT <- cut(as.matrix(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+# FACTORS_CCA <- FACTORS_CCA %>%
+#   mutate(COHORT = fct_relevel(COHORT, sort))
+#
+# chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
+# ggplot(FACTORS_CCA) +
+#   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
+#   geom_vline(linetype="dashed", xintercept=chi_overall) +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   scale_fill_discrete(name="Assigned cohort") +
+#   labs(title="Distribution of overall scores (CCAs)",
+#        caption="Dashed line represents the overall score for the entire City of Chicago",
+#        x="Overall score", y="Number of CCAs") +
+#   theme_classic()
 
 
 # Map the results ---------------------------------------------------------
@@ -165,9 +176,9 @@ muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
 muni_labels <- muni_geo %>%
   filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
 
-cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
-  st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
+# cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
+#   st_transform(IL_E_NAD83) %>%
+#   left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
 
 tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
   tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
@@ -179,28 +190,28 @@ tm_shape(muni_labels) +
 tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
 
-tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
+# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+#   tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+# tm_legend(legend.position=c("left", "bottom")) +
+# tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
 
 
 # Write output files ------------------------------------------------------
 
-OUT_DATA_MUNI <- FACTORS_MUNI %>%
-  rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
-  select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
-  select(-SCORE_OVERALL)
+# OUT_DATA_MUNI <- FACTORS_MUNI %>%
+#   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
+#   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
+#   select(-SCORE_OVERALL)
+#
+# write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
 
-write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
-
-OUT_DATA_CCA <- FACTORS_CCA %>%
-  rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
-  select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
-  select(-SCORE_OVERALL)
-
-write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
+# OUT_DATA_CCA <- FACTORS_CCA %>%
+#   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
+#   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
+#   select(-SCORE_OVERALL)
+#
+# write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 
 
 # # Compare scores/cohorts against previous year ----------------------------
