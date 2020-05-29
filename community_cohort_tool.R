@@ -89,7 +89,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   # Inspect score distribution
   print(
     ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
+      geom_histogram(aes(x=get(factor), fill=IN_COOK), color="white", bins=50) + #fill="skyblue"
       geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
       geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
       geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
@@ -107,7 +107,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
 
   print(
     ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
+      geom_histogram(aes(x=get(score_col), fill=IN_COOK), color="white", binwidth=1) + #fill="skyblue"
       geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
       scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
       labs(title="Distribution of factor scores", subtitle=score_col,
