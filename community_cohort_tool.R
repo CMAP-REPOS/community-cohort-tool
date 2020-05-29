@@ -168,11 +168,9 @@ tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
 
 
-# Write output files ------------------------------------------------------
-
+# # Write output files ------------------------------------------------------
 # OUT_DATA_MUNI <- FACTORS_MUNI %>%
 #   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
 #   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
 #   select(-SCORE_OVERALL)
-#
 # write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
