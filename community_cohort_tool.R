@@ -150,13 +150,14 @@ cnty_geo <- st_read("input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
 
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID"))
+  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  filter(IN_COOK == TRUE | MUNI.x == "Chicago")
 
 muni_labels <- muni_geo %>%
-  filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+  filter(MUNI.x %in% c("Elgin", "Cicero", "Arlington Heights", "Evanston", "Orland Park"))  # Label select munis
 
 mutate(muni_geo, COHORT = as.integer(COHORT)) %>%
-tm_shape(bbox=bb(filter(muni_geo, IN_COOK==TRUE), ext=1.2)) +
+tm_shape(bbox=bb(muni_geo, ext=1.2)) +
   tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)"),
               textNA="No data", colorNA="#dddddd") +
