@@ -138,9 +138,14 @@ bin_center = bin_width / 2
 
 ggplot(FACTORS_MUNI) +
   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
+  geom_histogram(
+    data=filter(FACTORS_MUNI, IN_COOK==TRUE), aes(x=SCORE_OVERALL_SCALED),
+    color="black", fill=NA, binwidth=bin_width, center=bin_center
+  ) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
   scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities") +
+  labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities",
+       subtitle="Cook municipalities outlined in black") +
   theme_classic()
 
 # FACTORS_CCA <- FACTORS_CCA %>%
@@ -180,9 +185,10 @@ muni_labels <- muni_geo %>%
 #   st_transform(IL_E_NAD83) %>%
 #   left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
 
-tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+mutate(muni_geo, COHORT = as.integer(COHORT)) %>%
+tm_shape(bbox=bb(cnty_geo, ext=1.2)) +
   tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)", "Incomplete data")) +
 tm_shape(cnty_geo) +
   tm_lines(col="#888888", lwd=2) +
 tm_shape(muni_labels) +
@@ -190,9 +196,10 @@ tm_shape(muni_labels) +
 tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
 
-# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+# mutate(cca_geo, COHORT = as.integer(COHORT)) %>%
+# tm_shape(bbox=bb(cca_geo, ext=1.2)) +
 #   tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
-#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)", "Incomplete data")) +
 # tm_legend(legend.position=c("left", "bottom")) +
 # tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
 
