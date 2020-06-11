@@ -161,7 +161,7 @@ ggplot(FACTORS_MUNI) +
 IL_E_NAD83 <- 26971  # EPSG projection ID: IL State Plane East (NAD83)
 tmap_mode("plot")  # "plot" (static) or "view" (interactive)
 
-cnty_geo <- st_read("input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
+cnty_geo <- st_read("input/cook_county_boundaries.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83)
 
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
@@ -230,7 +230,8 @@ muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
 tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
   tm_polygons("SCORE_CHG", title="", palette="-PuOr", contrast=c(0,1), n=4, border.col="#ffffff",
               midpoint=NA, style="fixed", breaks=c(-100,-20,-10,-5,5,10,20,100),
-              labels=c("-20 or more (higher need)", "-20 to -10", "-10 to -5", "-5 to +5", "+5 to +10", "+10 to +20", "+20 or more (lower need)"),
+              labels=c("-20 or more (increased eligibility)", "-20 to -10", "-10 to -5", "-5 to +5",
+                       "+5 to +10", "+10 to +20", "+20 or more (decreased eligibility)"),
               textNA="Ineligible", colorNA="#dddddd") +
   tm_shape(cnty_geo) +
     tm_lines(col="#666666", lwd=1) +
