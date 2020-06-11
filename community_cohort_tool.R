@@ -6,6 +6,7 @@ library(sf)
 library(tmap)
 library(tmaptools)
 
+SCENARIO_NAME <- "Base"
 IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
 
 
@@ -121,7 +122,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
       geom_hline(yintercept=13.4, color="maroon", linetype="dashed") +
       scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
       labs(title="Distribution of factor scores", subtitle=score_col,
-           caption="Dashed line represents a perfect decile distribution of 13.4 municipalities per group",
+           caption="Dashed line represents a perfect decile distribution of 13.5 municipalities per group",
            x=score_col, y="Number of municipalities") +
       theme_classic()
   )
@@ -142,15 +143,16 @@ FACTORS_MUNI$COHORT <- cut(as.matrix(FACTORS_MUNI$SCORE_OVERALL_SCALED), c(-Inf,
 FACTORS_MUNI <- FACTORS_MUNI %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
-bin_width = 100 / (max_wt_score - min_wt_score)
-bin_center = bin_width / 2
+bin_width = 5 #100 / (max_wt_score - min_wt_score)
+bin_center = 2.5 #bin_width / 2
 
 ggplot(FACTORS_MUNI) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT),
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED), fill="skyblue",
                  color="white", binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
   scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores", x="Overall score", y="Number of municipalities") +
+  labs(title=paste("Distribution of overall scores:", SCENARIO_NAME, "scenario"),
+       x="Overall score", y="Number of municipalities") +
   theme_classic()
 
 
@@ -175,11 +177,11 @@ tm_shape(bbox=bb(muni_geo, ext=1.1)) +
   tm_polygons("SCORE_OVERALL_SCALED", title="", palette="-Reds", n=10, border.col="#ffffff",
               textNA="Ineligible", colorNA="#dddddd") +
 tm_shape(cnty_geo) +
-  tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+  tm_lines(col="#666666", lwd=1) +
+# tm_shape(muni_labels) +
+#   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
 tm_legend(legend.position=c("left", "bottom")) +
-  tm_layout(title="Overall scores: Base scenario", frame=FALSE)
+  tm_layout(title=paste("Overall scores:", SCENARIO_NAME, "scenario"), frame=FALSE)
 
 
 # # Write output files ------------------------------------------------------
@@ -206,37 +208,18 @@ COMPARE_MUNI <- FACTORS_MUNI %>%
 CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$SCORE_OVERALL_SCALED != COMPARE_MUNI$SCORE_BASE, c("MUNI", "SCORE_OVERALL_SCALED", "SCORE_BASE", "IN_COOK")]
 CHANGED_MUNIS
 
-# Descriptive statistics
-library(modelr)
-
-lm_muni <- lm(SCORE_OVERALL_SCALED ~ SCORE_BASE, data=COMPARE_MUNI)
-cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_BASE, COMPARE_MUNI$SCORE_OVERALL_SCALED))
-cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
-cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
-
 # Plots
 ggplot(COMPARE_MUNI) +
-  geom_point(aes(x=SCORE_BASE, y=SCORE_OVERALL_SCALED, color=SCORE_BASE), alpha=0.6) +
   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-  geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
+  # geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
+  geom_count(aes(x=SCORE_BASE, y=SCORE_OVERALL_SCALED), color="maroon", alpha=0.5) +
+  scale_size_area(max_size=5) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_color_discrete(name="Baseline score") +
-  labs(title="Comparison of scenario scores vs. baseline scores", x="Baseline score", y="Scenario score") +
+  labs(title=paste("Municipalities by overall score vs. baseline:", SCENARIO_NAME, "scenario"),
+       x="Base scenario score",
+       y=paste(SCENARIO_NAME, "scenario score")) +
   theme_classic()
-
-ggplot(COMPARE_MUNI) +
-  geom_count(aes(x=SCORE_BASE, y=SCORE_OVERALL_SCALED), color="maroon") +
-  scale_size_area(max_size = 20) +
-  labs(title="Municipalities by baseline and scenario score", x="Baseline score", y="Scenario score")
-
-ggplot(COMPARE_MUNI) +
-  geom_histogram(aes(x=SCORE_BASE, fill="Baseline"), stat="count", width=0.5, position=position_nudge(x=-0.25)) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill="Scenario"), stat="count", width=0.5, position=position_nudge(x=0.25)) +
-  labs(title="Comparison of scenario scores vs. baseline scores",
-       x="Overall score", y="Number of municipalities") +
-  theme_classic() +
-  theme(legend.title=element_blank())
 
 # Maps
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
@@ -247,10 +230,11 @@ muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
 tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
   tm_polygons("SCORE_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
               midpoint=NA, style="fixed", breaks=c(-30,-20,-10,0,10,20,30,40),
-              labels=c("-30 (lower need)", "-20", "-10", "+0 (no change)", "+10", "+20", "+30 (higher need)")) +
+              labels=c("-30 (lower need)", "-20", "-10", "+0 (no change)", "+10", "+20", "+30 (higher need)"),
+              textNA="Ineligible", colorNA="#dddddd") +
   tm_shape(cnty_geo) +
-  tm_lines(col="#888888", lwd=2) +
-  tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+    tm_lines(col="#666666", lwd=1) +
+  # tm_shape(muni_labels) +
+  #   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
   tm_legend(legend.position=c("left", "bottom")) +
-  tm_layout(title="Change in score (baseline to scenario)", frame=FALSE)
+  tm_layout(title=paste0("Score change (", SCENARIO_NAME, " vs. Base scenario)"), frame=FALSE)
