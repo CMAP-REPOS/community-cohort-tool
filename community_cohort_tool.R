@@ -12,7 +12,7 @@ IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest
 
 # Load input factors, weights and cohort thresholds -----------------------
 
-FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
+FACTORS <- read_xlsx(IN_XLSX, sheet="FACTORS")
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
@@ -20,20 +20,20 @@ COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
 # Restrict to suburban Cook munis -----------------------------------------
 
-FACTORS_MUNI <- FACTORS_MUNI %>%
+FACTORS <- FACTORS %>%
   filter(IN_COOK == 1 & MUNI != "Chicago")
 
 
 # Calculate factor-specific scoring thresholds ----------------------------
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm=TRUE)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm=TRUE)[1,])
+WEIGHTS$MED <- unlist(summarize_all(FACTORS[, WEIGHTS$FACTOR_NAME], median, na.rm=TRUE)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS[, WEIGHTS$FACTOR_NAME], sd, na.rm=TRUE)[1,])
 
 # Exclude 0s from logged COVID-19 death rate distribution
-WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_COVID_DEATH_RATE", "MED"] <- filter(FACTORS_MUNI, ln_COVID_DEATH_RATE > 0) %>%
+WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_COVID_DEATH_RATE", "MED"] <- filter(FACTORS, ln_COVID_DEATH_RATE > 0) %>%
   .$ln_COVID_DEATH_RATE %>%
   median()
-WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_COVID_DEATH_RATE", "SD"] <- filter(FACTORS_MUNI, ln_COVID_DEATH_RATE > 0) %>%
+WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_COVID_DEATH_RATE", "SD"] <- filter(FACTORS, ln_COVID_DEATH_RATE > 0) %>%
   .$ln_COVID_DEATH_RATE %>%
   sd()
 
@@ -66,14 +66,14 @@ if (ln_covid_cut1 > 0) {
 # For raw COVID-19 death rate, force score=1 for munis with 0 deaths, equal
 # intervals for scores 2-10
 WEIGHTS[WEIGHTS$FACTOR_NAME=="COVID_DEATH_RATE", paste0("CUT", 1:9)] <- as.list(
-  seq(from=0, by=max(FACTORS_MUNI$COVID_DEATH_RATE)/9, length.out=9)
+  seq(from=0, by=max(FACTORS$COVID_DEATH_RATE)/9, length.out=9)
 )
 
 
 # Calculate factor-specific scores ----------------------------------------
 
-keep_cols_muni <- append(c("GEOID", "MUNI", "IN_COOK"), WEIGHTS$FACTOR_NAME)
-FACTORS_MUNI <- FACTORS_MUNI[, keep_cols_muni]
+keep_cols <- append(c("GEOID", "MUNI", "IN_COOK"), WEIGHTS$FACTOR_NAME)
+FACTORS <- FACTORS[, keep_cols]
 
 score_cols <- c()
 wt_score_cols <- c()
@@ -90,16 +90,16 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   cuts <- WEIGHTS[WEIGHTS$FACTOR_NAME==factor,] %>%
     select(starts_with("CUT"))
   groups <- c(1:10)
-  FACTORS_MUNI[, score_col] <- cut(as.matrix(FACTORS_MUNI[, factor]), cuts, groups, labels=FALSE)
+  FACTORS[, score_col] <- cut(as.matrix(FACTORS[, factor]), cuts, groups, labels=FALSE)
   if (weight < 0) {
     # Reverse score order for factors with negative weights
-    FACTORS_MUNI[, score_col] <-  max(groups) + 1 - FACTORS_MUNI[, score_col]
+    FACTORS[, score_col] <-  max(groups) + 1 - FACTORS[, score_col]
   }
-  FACTORS_MUNI[, wt_score_col] <- FACTORS_MUNI[, score_col] * abs(weight)
+  FACTORS[, wt_score_col] <- FACTORS[, score_col] * abs(weight)
 
   # Inspect score distribution
   print(
-    ggplot(FACTORS_MUNI) +
+    ggplot(FACTORS) +
       geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
       geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
       geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
@@ -117,12 +117,12 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   )
 
   print(
-    ggplot(FACTORS_MUNI) +
+    ggplot(FACTORS) +
       geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
       geom_hline(yintercept=13.4, color="maroon", linetype="dashed") +
       scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
       labs(title="Distribution of factor scores", subtitle=score_col,
-           caption="Dashed line represents a perfect decile distribution of 13.5 municipalities per group",
+           caption="Dashed line represents a perfect decile distribution of 13.4 municipalities per group",
            x=score_col, y="Number of municipalities") +
       theme_classic()
   )
@@ -131,26 +131,25 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
 
 # Calculate overall score & cohorts ---------------------------------------
 
-FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
+FACTORS$SCORE_OVERALL <- rowSums(FACTORS[, wt_score_cols])
 
 # Rescale from 0-100
 min_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 1
 max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
-FACTORS_MUNI <- FACTORS_MUNI %>%
+FACTORS <- FACTORS %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_MUNI$COHORT <- cut(as.matrix(FACTORS_MUNI$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_MUNI <- FACTORS_MUNI %>%
+FACTORS$COHORT <- cut(as.matrix(FACTORS$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS <- FACTORS %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
-bin_width = 5 #100 / (max_wt_score - min_wt_score)
-bin_center = 2.5 #bin_width / 2
+bin_width = 2.222222 #100 / (max_wt_score - min_wt_score)
+bin_center = 1.111111 #bin_width / 2
 
-ggplot(FACTORS_MUNI) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED), fill="skyblue",
-                 color="white", binwidth=bin_width, center=bin_center) +
+ggplot(FACTORS) +
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED), fill="skyblue", color="white",
+                 lwd=0.25, binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
   labs(title=paste("Distribution of overall scores:", SCENARIO_NAME, "scenario"),
        x="Overall score", y="Number of municipalities") +
   theme_classic()
@@ -166,7 +165,7 @@ cnty_geo <- st_read("input/cook_county_boundaries.geojson", quiet=TRUE) %>%
 
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  left_join(FACTORS, by=c("GEOID_n"="GEOID")) %>%
   filter(IN_COOK == 1 | MUNI.x == "Chicago")
 
 muni_labels <- muni_geo %>%
@@ -184,34 +183,31 @@ tm_legend(legend.position=c("left", "bottom")) +
   tm_layout(title=paste("Overall scores:", SCENARIO_NAME, "scenario"), frame=FALSE)
 
 
-# # Write output files ------------------------------------------------------
-# OUT_DATA_MUNI <- FACTORS_MUNI %>%
-#   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
-#   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
-#   select(-SCORE_OVERALL)
-# write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
+# Write output files ------------------------------------------------------
+OUT_DATA <- FACTORS %>%
+  select(GEOID, MUNI, starts_with("SCORE_"), -SCORE_OVERALL)
+write_csv(OUT_DATA, paste0("output/assigned_scores_", SCENARIO_NAME, ".csv"))
 
 
 # Compare scores/cohorts against base scenario ------------------------------
 
-PREV_SCORES_MUNI <- read_csv("input/baseline_scores.csv") %>%
+BASE_SCORES <- read_csv("output/assigned_scores_base.csv") %>%
   rename(
     SCORE_BASE = SCORE_OVERALL_SCALED
   )
 
-COMPARE_MUNI <- FACTORS_MUNI %>%
-  left_join(PREV_SCORES_MUNI, by=c("GEOID", "MUNI")) %>%
+COMPARE <- FACTORS %>%
+  left_join(BASE_SCORES, by=c("GEOID", "MUNI")) %>%
   mutate(
     SCORE_CHG = as.numeric(SCORE_OVERALL_SCALED) - as.numeric(SCORE_BASE)
   )
 
-CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$SCORE_OVERALL_SCALED != COMPARE_MUNI$SCORE_BASE, c("MUNI", "SCORE_OVERALL_SCALED", "SCORE_BASE", "SCORE_CHG")]
+CHANGED_MUNIS <- COMPARE[COMPARE$SCORE_OVERALL_SCALED != COMPARE$SCORE_BASE, c("MUNI", "SCORE_OVERALL_SCALED", "SCORE_BASE", "SCORE_CHG")]
 CHANGED_MUNIS
 
 # Plots
-ggplot(COMPARE_MUNI) +
+ggplot(COMPARE) +
   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-  # geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
   geom_count(aes(x=SCORE_BASE, y=SCORE_OVERALL_SCALED), color="maroon", alpha=0.5) +
   scale_size_area(max_size=5) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
@@ -224,7 +220,7 @@ ggplot(COMPARE_MUNI) +
 # Maps
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  left_join(COMPARE, by=c("GEOID_n"="GEOID")) %>%
   filter(IN_COOK == 1 | MUNI.x == "Chicago")
 
 tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
