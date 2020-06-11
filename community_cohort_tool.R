@@ -205,7 +205,7 @@ COMPARE_MUNI <- FACTORS_MUNI %>%
     SCORE_CHG = as.numeric(SCORE_OVERALL_SCALED) - as.numeric(SCORE_BASE)
   )
 
-CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$SCORE_OVERALL_SCALED != COMPARE_MUNI$SCORE_BASE, c("MUNI", "SCORE_OVERALL_SCALED", "SCORE_BASE", "IN_COOK")]
+CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$SCORE_OVERALL_SCALED != COMPARE_MUNI$SCORE_BASE, c("MUNI", "SCORE_OVERALL_SCALED", "SCORE_BASE", "SCORE_CHG")]
 CHANGED_MUNIS
 
 # Plots
@@ -228,9 +228,9 @@ muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   filter(IN_COOK == 1 | MUNI.x == "Chicago")
 
 tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
-  tm_polygons("SCORE_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
-              midpoint=NA, style="fixed", breaks=c(-30,-20,-10,0,10,20,30,40),
-              labels=c("-30 (lower need)", "-20", "-10", "+0 (no change)", "+10", "+20", "+30 (higher need)"),
+  tm_polygons("SCORE_CHG", title="", palette="-PuOr", contrast=c(0,1), n=4, border.col="#ffffff",
+              midpoint=NA, style="fixed", breaks=c(-100,-20,-10,-5,5,10,20,100),
+              labels=c("-20 or more (higher need)", "-20 to -10", "-10 to -5", "-5 to +5", "+5 to +10", "+10 to +20", "+20 or more (lower need)"),
               textNA="Ineligible", colorNA="#dddddd") +
   tm_shape(cnty_geo) +
     tm_lines(col="#666666", lwd=1) +
