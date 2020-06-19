@@ -7,7 +7,7 @@ library(tmap)
 library(tmaptools)
 
 SCENARIO_NAME <- "Base"
-IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+IN_XLSX <- "input/equity_distribution_inputs.xlsx"  # Spreadsheet containing latest data
 
 
 # Load input factors, weights and cohort thresholds -----------------------
