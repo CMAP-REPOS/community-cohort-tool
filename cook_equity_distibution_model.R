@@ -6,16 +6,14 @@ library(sf)
 library(tmap)
 library(tmaptools)
 
-SCENARIO_NAME <- "Base"
+SCENARIO_NAME <- "base"
 IN_XLSX <- "input/equity_distribution_inputs.xlsx"  # Spreadsheet containing latest data
 
 
-# Load input factors, weights and cohort thresholds -----------------------
+# Load input factors and weights ------------------------------------------
 
 FACTORS <- read_xlsx(IN_XLSX, sheet="FACTORS")
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
-COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
-COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
 
 # Restrict to suburban Cook munis -----------------------------------------
@@ -129,7 +127,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
 }
 
 
-# Calculate overall score & cohorts ---------------------------------------
+# Calculate overall score -------------------------------------------------
 
 FACTORS$SCORE_OVERALL <- rowSums(FACTORS[, wt_score_cols])
 
@@ -139,9 +137,6 @@ max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
 FACTORS <- FACTORS %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS$COHORT <- cut(as.matrix(FACTORS$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS <- FACTORS %>%
-  mutate(COHORT = fct_relevel(COHORT, sort))
 
 bin_width = 2.222222 #100 / (max_wt_score - min_wt_score)
 bin_center = 1.111111 #bin_width / 2
@@ -171,8 +166,7 @@ muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
 muni_labels <- muni_geo %>%
   filter(MUNI.x %in% c("Elgin", "Cicero", "Arlington Heights", "Evanston", "Orland Park"))  # Label select munis
 
-mutate(muni_geo, COHORT = as.integer(COHORT)) %>%
-tm_shape(bbox=bb(muni_geo, ext=1.1)) +
+tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
   tm_polygons("SCORE_OVERALL_SCALED", title="", palette="-Reds", n=10, border.col="#ffffff",
               textNA="Ineligible", colorNA="#dddddd") +
 tm_shape(cnty_geo) +
@@ -189,7 +183,7 @@ OUT_DATA <- FACTORS %>%
 write_csv(OUT_DATA, paste0("output/assigned_scores_", SCENARIO_NAME, ".csv"))
 
 
-# Compare scores/cohorts against base scenario ------------------------------
+# Compare scores against base scenario ------------------------------------
 
 BASE_SCORES <- read_csv("output/assigned_scores_base.csv") %>%
   rename(
