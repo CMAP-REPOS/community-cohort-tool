@@ -14,7 +14,7 @@ IN_XLSX <- "input/equity_distribution_inputs.xlsx"  # Spreadsheet containing lat
 
 FACTORS <- read_xlsx(IN_XLSX, sheet="FACTORS")
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
-
+#WEIGHTS$WEIGHT <- c(0, 10, 30, -40, -20)  # Final weights
 
 # Restrict to suburban Cook munis -----------------------------------------
 
@@ -70,7 +70,7 @@ WEIGHTS[WEIGHTS$FACTOR_NAME=="COVID_DEATH_RATE", paste0("CUT", 1:9)] <- as.list(
 
 # Calculate factor-specific scores ----------------------------------------
 
-keep_cols <- append(c("GEOID", "MUNI", "IN_COOK"), WEIGHTS$FACTOR_NAME)
+keep_cols <- append(c("GEOID", "MUNI", "IN_COOK", "POP"), WEIGHTS$FACTOR_NAME)
 FACTORS <- FACTORS[, keep_cols]
 
 score_cols <- c()
@@ -176,10 +176,20 @@ tm_shape(cnty_geo) +
 tm_legend(legend.position=c("left", "bottom")) +
   tm_layout(title=paste("Overall scores:", SCENARIO_NAME, "scenario"), frame=FALSE)
 
+tm_shape(muni_geo, bbox=bb(muni_geo, ext=1.1)) +
+  tm_polygons("POP", title="", palette="Purples", n=10, border.col="#ffffff",
+              textNA="Ineligible", colorNA="#dddddd") +
+  tm_shape(cnty_geo) +
+  tm_lines(col="#666666", lwd=1) +
+  # tm_shape(muni_labels) +
+  #   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+  tm_legend(legend.position=c("left", "bottom")) +
+  tm_layout(title=paste("Total Population"), frame=FALSE)
+
 
 # Write output files ------------------------------------------------------
 OUT_DATA <- FACTORS %>%
-  select(GEOID, MUNI, starts_with("SCORE_"), -SCORE_OVERALL)
+  select(GEOID, MUNI, POP, starts_with("SCORE_"), -SCORE_OVERALL)
 write_csv(OUT_DATA, paste0("output/assigned_scores_", SCENARIO_NAME, ".csv"))
 
 
