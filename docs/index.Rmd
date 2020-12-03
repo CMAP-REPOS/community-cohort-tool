@@ -9,17 +9,20 @@ output:
     toc_float: yes
 ---
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools")
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
+#devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
 library(tidyverse)
 library(readxl)
 library(ggplot2)
 library(sf)
 library(tmap)
 library(tmaptools)
+library(cmapplot)
+apply_cmap_default_aes()
 
 COHORT_YEAR <- 2020  # Update this each year!
-IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+IN_XLSX <- "../input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
 ```
 
 This tool is used by the [Chicago Metropolitan Agency for Planning (CMAP)](https://www.cmap.illinois.gov) to group the 284 municipalities and 77 Chicago Community Areas in the region into Community Cohorts, which are then used to determine local contribution levels for most [Local Technical Assistance](https://www.cmap.illinois.gov/programs/LTA) projects. The source code and data is hosted in a [GitHub repository](https://github.com/CMAP-REPOS/community-cohort-tool).
@@ -48,7 +51,7 @@ This tool relies on a single Excel file -- located at **input/community_cohort_i
 
 Load a table of potential factors for each of the 284 municipalities in the CMAP region from the **FACTORS_MUNI** sheet in **input/community_cohort_inputs.xlsx**. Any factor whose name starts with `ln_` represents the *natural log* of the factor sharing the rest of the name. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-muni, echo=FALSE, message=FALSE, warning=FALSE}
 FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
 FACTORS_MUNI
 ```
@@ -58,7 +61,7 @@ FACTORS_MUNI
 
 Load a table of potential factors for each of the 77 Chicago Community Areas (CCAs) within the City of Chicago from the **FACTORS_CCA** sheet in **input/community_cohort_inputs.xlsx**. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-cca, echo=FALSE, message=FALSE, warning=FALSE}
 FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
 FACTORS_CCA
 ```
@@ -68,7 +71,7 @@ FACTORS_CCA
 
 Load a table of weights for the factors from the **WEIGHTS** sheet in **input/community_cohort_inputs.xlsx**. Factors with non-zero weights will be included in the scoring. The larger the *absolute magnitude* of a factor, the more influence it will have on the overall score. Negative weights should be specified for factors where lower values correspond to lower need (i.e. the lowest values will receive the highest scores).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-weights, echo=FALSE, message=FALSE, warning=FALSE}
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 WEIGHTS
 ```
@@ -78,7 +81,7 @@ WEIGHTS
 
 Load a table of cohort thresholds from the **COHORTS** sheet in **input/community_cohort_inputs.xlsx**. These will be the maximum overall scores (from a possible range of 0-100) that will be assigned to a particular cohort.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-cohorts, echo=FALSE, message=FALSE, warning=FALSE}
 COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 COHORTS
@@ -89,7 +92,7 @@ COHORTS
 
 For each factor included in the `WEIGHTS` table, calculate the median and standard deviation from the **FACTORS_MUNI** table. Use these with specific z-scores to assign municpalities a score from 1-10, such that each group will roughly represent an equal number of municipalities (assuming the factor approximates a normal distribution). 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r weights, echo=FALSE, message=FALSE, warning=FALSE}
 WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median)[1,])
 WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd)[1,])
 
@@ -111,10 +114,9 @@ WEIGHTS <- WEIGHTS %>%
 
 For factors that do not approximate a normal distribution, make manual adjustments to the group thresholds as necessary to obtain sensible scores.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r weight-adj, echo=FALSE, message=FALSE, warning=FALSE}
 # Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
-WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- seq(0.1, 0.9, 0.1)
-WEIGHTS %>% select(FACTOR_NAME, WEIGHT, starts_with("CUT"), -CUT0, -CUT10)
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
 ```
 
 
@@ -122,7 +124,7 @@ WEIGHTS %>% select(FACTOR_NAME, WEIGHT, starts_with("CUT"), -CUT0, -CUT10)
 
 For each factor, use the calculated group thresholds to assign factor-specific scores to each municipality. Factors with negative weights will have their scores reversed so that the lowest values receive the highest scores. Inspect histograms of the factors, as well as the resultant scoring distributions
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.5}
+```{r scores, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.5}
 keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
 keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
 FACTORS_MUNI <- FACTORS_MUNI[, keep_cols_muni]
@@ -154,30 +156,31 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   FACTORS_CCA[, wt_score_col] <- FACTORS_CCA[, score_col] * abs(weight)
 
   # Inspect score distribution
-  print(ggplot(FACTORS_MUNI) +
-          geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
-          geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
-          geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
-          geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
-          geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
-          geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
-          geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
-          geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
-          geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
-          geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
-          labs(title="Distribution of factor values (with group breaks)",
-               subtitle=factor,
-               x=factor, y="Number of municipalities") +
-          theme_classic())
+  print(
+    ggplot(FACTORS_MUNI) +
+      geom_histogram(aes(x=get(factor)), color="#222222", fill="#73c9e3", size=0.3, bins=50) +
+      geom_vline(xintercept=cuts[[2]], color="#222222", linetype="dotted") +
+      geom_vline(xintercept=cuts[[3]], color="#222222", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[4]], color="#222222", linetype="dashed") +
+      geom_vline(xintercept=cuts[[5]], color="#222222", linetype="longdash") +
+      geom_vline(xintercept=cuts[[6]], color="#222222", linetype="solid", size=1) +  # Median
+      geom_vline(xintercept=cuts[[7]], color="#222222", linetype="longdash") +
+      geom_vline(xintercept=cuts[[8]], color="#222222", linetype="dashed") +
+      geom_vline(xintercept=cuts[[9]], color="#222222", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[10]], color="#222222", linetype="dotted") +
+      labs(title=paste("Distribution of factor values (with group breaks)", factor, sep="\n")) +
+      theme_cmap(hline=0, ylab="Number of municipalities")
+  )
 
-  print(ggplot(FACTORS_MUNI) +
-          geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
-          geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
-          scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
-          labs(title="Distribution of factor scores", subtitle=score_col,
-               caption="Dashed line represents a perfect decile distribution of 28.4 municipalities per group",
-               x=score_col, y="Number of municipalities") +
-          theme_classic())
+  print(
+    ggplot(FACTORS_MUNI) +
+      geom_histogram(aes(x=get(score_col)), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
+      geom_hline(yintercept=28.4, color="#222222", size=0.5, linetype="dashed") +
+      scale_x_continuous(limits=c(min(groups)-0.5, max(groups)+0.5), breaks=groups) +
+      labs(title = paste("Distribution of factor scores", score_col, sep="\n"),
+           caption="Note: Dashed line represents a perfect decile distribution of 28.4 municipalities per group.") +
+      theme_cmap(hline=0, ylab="Number of municipalities")
+  )
 }
 ```
 
@@ -188,7 +191,7 @@ The same thresholds derived to assign scores to the municipalities will also be 
 
 The overall score is calculated for each community by multiplying each factor-specific score by the absolute magnitude of that factor's weight, summing these products, and then scaling the results so that the minimum and maximum theoretical scores (i.e. 1's and 10's for every factor-specific score, respectively) would receive overall scores of 0 and 100, respectively.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.7}
+```{r overall, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.7}
 FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
 FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
 
@@ -206,11 +209,14 @@ bin_width = 100 / (max_wt_score - min_wt_score)
 bin_center = bin_width / 2
 
 ggplot(FACTORS_MUNI) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities") +
-  theme_classic()
+  labs(title="Distribution of overall scores (municipalities)") +
+  theme_cmap(hline=0, ylab="Number of municipalities") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
 
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
@@ -220,14 +226,16 @@ FACTORS_CCA <- FACTORS_CCA %>%
 
 chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
 ggplot(FACTORS_CCA) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
-  geom_vline(linetype="dashed", xintercept=chi_overall) +
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
+  geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
   labs(title="Distribution of overall scores (CCAs)",
-       caption="Dashed line represents the overall score for the entire City of Chicago",
-       x="Overall score", y="Number of CCAs") +
-  theme_classic()
+       caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
+  theme_cmap(hline=0, ylab="Number of CCAs") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
 ```
 
 
@@ -235,39 +243,51 @@ ggplot(FACTORS_CCA) +
 
 Create maps showing the final cohort assignment for each municipality and CCA.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=1.3}
+```{r maps, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=1.3}
 IL_E_NAD83 <- 26971  # EPSG projection ID: IL State Plane East (NAD83)
 tmap_mode("plot")  # "plot" (static) or "view" (interactive)
 
-cnty_geo <- st_read("input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
+cnty_geo <- st_read("../input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83)
 
-muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
+muni_geo <- st_read("../input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID"))
+  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
-muni_labels <- muni_geo %>%
-  filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+# muni_labels <- muni_geo %>%
+#   filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
 
-cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
+cca_geo <- st_read("../input/chicago_ccas.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
+  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
 tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_shape(cnty_geo) +
   tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# tm_shape(muni_labels) +
+#   tm_text("MUNI.x", size=0.7, col="#000000") +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
+tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
+tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 ```
 
 
@@ -277,24 +297,24 @@ Write overall scores and assigned cohorts for each municipality and CCA in the f
 
 ### output/cohort_assignments_muni.csv
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r write-muni, echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_MUNI <- FACTORS_MUNI %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 OUT_DATA_MUNI
 
-write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
+write_csv(OUT_DATA_MUNI, "../output/cohort_assignments_muni.csv")
 ```
 
 ### output/cohort_assignments_cca.csv
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r write-cca, echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_CCA <- FACTORS_CCA %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 OUT_DATA_CCA
 
-write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
+write_csv(OUT_DATA_CCA, "../output/cohort_assignments_cca.csv")
 ```

@@ -1,10 +1,13 @@
-#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools")
+#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
+#devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
 library(tidyverse)
 library(readxl)
 library(ggplot2)
 library(sf)
 library(tmap)
 library(tmaptools)
+library(cmapplot)
+apply_cmap_default_aes()
 
 COHORT_YEAR <- 2020  # Update this each year!
 IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
@@ -78,31 +81,28 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   # Inspect score distribution
   print(
     ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(factor)), color="white", fill="skyblue", bins=50) +
-      geom_vline(xintercept=cuts[[2]], color="maroon", linetype="dotted") +
-      geom_vline(xintercept=cuts[[3]], color="maroon", linetype="dotdash") +
-      geom_vline(xintercept=cuts[[4]], color="maroon", linetype="dashed") +
-      geom_vline(xintercept=cuts[[5]], color="maroon", linetype="longdash") +
-      geom_vline(xintercept=cuts[[6]], color="maroon", linetype="solid", size=1) +  # Median
-      geom_vline(xintercept=cuts[[7]], color="maroon", linetype="longdash") +
-      geom_vline(xintercept=cuts[[8]], color="maroon", linetype="dashed") +
-      geom_vline(xintercept=cuts[[9]], color="maroon", linetype="dotdash") +
-      geom_vline(xintercept=cuts[[10]], color="maroon", linetype="dotted") +
-      labs(title="Distribution of factor values (with group breaks)",
-           subtitle=factor,
-           x=factor, y="Number of municipalities") +
-      theme_classic()
+      geom_histogram(aes(x=get(factor)), color="#222222", fill="#73c9e3", size=0.3, bins=50) +
+      geom_vline(xintercept=cuts[[2]], color="#222222", linetype="dotted") +
+      geom_vline(xintercept=cuts[[3]], color="#222222", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[4]], color="#222222", linetype="dashed") +
+      geom_vline(xintercept=cuts[[5]], color="#222222", linetype="longdash") +
+      geom_vline(xintercept=cuts[[6]], color="#222222", linetype="solid", size=1) +  # Median
+      geom_vline(xintercept=cuts[[7]], color="#222222", linetype="longdash") +
+      geom_vline(xintercept=cuts[[8]], color="#222222", linetype="dashed") +
+      geom_vline(xintercept=cuts[[9]], color="#222222", linetype="dotdash") +
+      geom_vline(xintercept=cuts[[10]], color="#222222", linetype="dotted") +
+      labs(title=paste("Distribution of factor values (with group breaks)", factor, sep="\n")) +
+      theme_cmap(hline=0, ylab="Number of municipalities")
   )
 
   print(
     ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(score_col)), color="white", fill="skyblue", binwidth=1) +
-      geom_hline(yintercept=28.4, color="maroon", linetype="dashed") +
-      scale_x_continuous(limits=c(min(groups)-1, max(groups)+1), breaks=groups) +
-      labs(title="Distribution of factor scores", subtitle=score_col,
-           caption="Dashed line represents a perfect decile distribution of 28.4 municipalities per group",
-           x=score_col, y="Number of municipalities") +
-      theme_classic()
+      geom_histogram(aes(x=get(score_col)), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
+      geom_hline(yintercept=28.4, color="#222222", size=0.5, linetype="dashed") +
+      scale_x_continuous(limits=c(min(groups)-0.5, max(groups)+0.5), breaks=groups) +
+      labs(title = paste("Distribution of factor scores", score_col, sep="\n"),
+           caption="Note: Dashed line represents a perfect decile distribution of 28.4 municipalities per group.") +
+      theme_cmap(hline=0, ylab="Number of municipalities")
   )
 }
 
@@ -126,11 +126,14 @@ bin_width = 100 / (max_wt_score - min_wt_score)
 bin_center = bin_width / 2
 
 ggplot(FACTORS_MUNI) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
-  labs(title="Distribution of overall scores (municipalities)", x="Overall score", y="Number of municipalities") +
-  theme_classic()
+  labs(title="Distribution of overall scores (municipalities)") +
+  theme_cmap(hline=0, ylab="Number of municipalities") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
 
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
@@ -140,14 +143,16 @@ FACTORS_CCA <- FACTORS_CCA %>%
 
 chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
 ggplot(FACTORS_CCA) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="white", binwidth=bin_width, center=bin_center) +
-  geom_vline(linetype="dashed", xintercept=chi_overall) +
+  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
+  geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  scale_fill_discrete(name="Assigned cohort") +
   labs(title="Distribution of overall scores (CCAs)",
-       caption="Dashed line represents the overall score for the entire City of Chicago",
-       x="Overall score", y="Number of CCAs") +
-  theme_classic()
+       caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
+  theme_cmap(hline=0, ylab="Number of CCAs") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
 
 
 # Map the results ---------------------------------------------------------
@@ -160,30 +165,42 @@ cnty_geo <- st_read("input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
 
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID"))
+  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
-muni_labels <- muni_geo %>%
-  filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+# muni_labels <- muni_geo %>%
+#   filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
 
 cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
+  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
 tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_shape(cnty_geo) +
   tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# tm_shape(muni_labels) +
+#   tm_text("MUNI.x", size=0.7, col="#000000") +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
+tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
+tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 
 # Write output files ------------------------------------------------------
@@ -262,9 +279,9 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
 #   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   scale_color_discrete(name="Previous cohort") +
-#   labs(title="Comparison of updated scores vs. previous scores (municipalities)", x="Previous score", y="Updated score") +
-#   theme_classic()
+#   labs(title="Comparison of updated scores vs. previous scores (municipalities)") +
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
+#   guides(color=guide_legend(title="Previous cohort"))
 #
 # ggplot(COMPARE_CCA) +
 #   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
@@ -272,35 +289,33 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
 #   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   scale_color_discrete(name="Previous cohort") +
-#   labs(title="Comparison of updated scores vs. previous scores (CCAs)", x="Previous score", y="Updated score") +
-#   theme_classic()
+#   labs(title="Comparison of updated scores vs. previous scores (CCAs)") +
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
+#   guides(color=guide_legend(title="Previous cohort"))
 #
 # ggplot(COMPARE_MUNI) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="#222222") +
 #   scale_size_area(max_size = 20) +
-#   labs(title="Municipalities by previous and updated cohort", x="Previous cohort", y="Updated cohort")
+#   labs(title="Municipalities by previous and updated cohort") +
+#   theme_cmap(xlab="Previous cohort", ylab="Updated cohort")
 #
 # ggplot(COMPARE_CCA) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="maroon") +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="#222222") +
 #   scale_size_area(max_size = 20) +
-#   labs(title="CCAs by previous and updated cohort", x="Previous cohort", y="Updated cohort")
+#   labs(title="CCAs by previous and updated cohort") +
+#   theme_cmap(xlab="Previous cohort", ylab="Updated cohort")
 #
 # ggplot(COMPARE_MUNI) +
 #   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of updated cohorts vs. previous cohorts (municipalities)",
-#        x="Cohort", y="Number of municipalities") +
-#   theme_classic() +
-#   theme(legend.title=element_blank())
+#   labs(title="Comparison of updated cohorts vs. previous cohorts (municipalities)") +
+#   theme_cmap(xlab="Cohort", ylab="Number of municipalities")
 #
 # ggplot(COMPARE_CCA) +
 #   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of updated cohorts vs. previous cohorts (CCAs)",
-#        x="Cohort", y="Number of CCAs") +
-#   theme_classic() +
-#   theme(legend.title=element_blank())
+#   labs(title="Comparison of updated cohorts vs. previous cohorts (CCAs)") +
+#   theme_cmap(xlab="Cohort", ylab="Number of CCAs")
 #
 # COHORT_POP <- COMPARE_MUNI %>%
 #   select(COHORT, POP) %>%
@@ -318,10 +333,8 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 # ggplot(COHORT_POP_CHG) +
 #   geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of population in updated cohorts vs. previous cohorts (municipalities)",
-#        x="Cohort", y="Total population") +
-#   theme_classic() +
-#   theme(legend.title=element_blank())
+#   labs(title="Comparison of population in updated cohorts vs. previous cohorts (municipalities)") +
+#   theme_cmap(xlab="Cohort", ylab="Total population")
 #
 # # Maps
 # muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
@@ -333,22 +346,30 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   left_join(COMPARE_CCA, by=c("CCA_NUM"="CCA_ID"))
 #
 # tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
 #               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_shape(cnty_geo) +
 #   tm_lines(col="#888888", lwd=2) +
-# tm_shape(muni_labels) +
-#   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# # tm_shape(muni_labels) +
+# #   tm_text("MUNI.x", size=0.7, col="#000000") +
 # tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE)
+# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
+#           fontface=cmapplot_globals$font$strong$face,
+#           fontfamily=cmapplot_globals$font$strong$family,
+#           legend.text.fontface=cmapplot_globals$font$regular$face,
+#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
 #
 # tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
 #               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE)
+# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
+#           fontface=cmapplot_globals$font$strong$face,
+#           fontfamily=cmapplot_globals$font$strong$family,
+#           legend.text.fontface=cmapplot_globals$font$regular$face,
+#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 
 # # Tables for memo ---------------------------------------------------------
