@@ -165,30 +165,40 @@ cnty_geo <- st_read("input/cmap_county_boundaries.geojson", quiet=TRUE) %>%
 
 muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID"))
+  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
-muni_labels <- muni_geo %>%
-  filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+# muni_labels <- muni_geo %>%
+#   filter(MUNI.x %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
 
 cca_geo <- st_read("input/chicago_ccas.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
-  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID"))
+  left_join(FACTORS_CCA, by=c("CCA_NUM"="CCA_ID")) %>%
+  mutate(COHORT_n = as.integer(COHORT))
 
 tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_shape(cnty_geo) +
   tm_lines(col="#888888", lwd=2) +
-tm_shape(muni_labels) +
-  tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# tm_shape(muni_labels) +
+#   tm_text("MUNI.x", size=0.7, col="#000000") +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE)
+tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT", title="", palette="Reds", n=4, border.col="#ffffff",
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE)
+tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
+          fontface=cmapplot_globals$font$strong$face,
+          fontfamily=cmapplot_globals$font$strong$family)
 
 
 # Write output files ------------------------------------------------------
@@ -268,8 +278,8 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   labs(title="Comparison of updated scores vs. previous scores (municipalities)") +
-#   theme_cmap(xlab="Previous score", ylab="Updated score") +
-#   guides(color = guide_legend(title="Previous cohort"))
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
+#   guides(color=guide_legend(title="Previous cohort"))
 #
 # ggplot(COMPARE_CCA) +
 #   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
@@ -278,8 +288,8 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
 #   labs(title="Comparison of updated scores vs. previous scores (CCAs)") +
-#   theme_cmap(xlab="Previous score", ylab="Updated score") +
-#   guides(color = guide_legend(title="Previous cohort"))
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
+#   guides(color=guide_legend(title="Previous cohort"))
 #
 # ggplot(COMPARE_MUNI) +
 #   geom_count(aes(x=COHORT_PREV, y=COHORT), color="#222222") +
@@ -334,22 +344,30 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   left_join(COMPARE_CCA, by=c("CCA_NUM"="CCA_ID"))
 #
 # tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
 #               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_shape(cnty_geo) +
 #   tm_lines(col="#888888", lwd=2) +
-# tm_shape(muni_labels) +
-#   tm_text("MUNI.x", size=0.7, col="#000000", fontface="bold") +
+# # tm_shape(muni_labels) +
+# #   tm_text("MUNI.x", size=0.7, col="#000000") +
 # tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE)
+# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
+#           fontface=cmapplot_globals$font$strong$face,
+#           fontfamily=cmapplot_globals$font$strong$family,
+#           legend.text.fontface=cmapplot_globals$font$regular$face,
+#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
 #
 # tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff",
+#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
 #               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE)
+# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
+#           fontface=cmapplot_globals$font$strong$face,
+#           fontfamily=cmapplot_globals$font$strong$family,
+#           legend.text.fontface=cmapplot_globals$font$regular$face,
+#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 
 # # Tables for memo ---------------------------------------------------------
