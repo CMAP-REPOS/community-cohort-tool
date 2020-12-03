@@ -9,7 +9,7 @@ output:
     toc_float: yes
 ---
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 #install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools")
 library(tidyverse)
 library(readxl)
@@ -48,7 +48,7 @@ This tool relies on a single Excel file -- located at **input/community_cohort_i
 
 Load a table of potential factors for each of the 284 municipalities in the CMAP region from the **FACTORS_MUNI** sheet in **input/community_cohort_inputs.xlsx**. Any factor whose name starts with `ln_` represents the *natural log* of the factor sharing the rest of the name. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-muni, echo=FALSE, message=FALSE, warning=FALSE}
 FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
 FACTORS_MUNI
 ```
@@ -58,7 +58,7 @@ FACTORS_MUNI
 
 Load a table of potential factors for each of the 77 Chicago Community Areas (CCAs) within the City of Chicago from the **FACTORS_CCA** sheet in **input/community_cohort_inputs.xlsx**. This table may include data that are not used in cohort scoring, depending on the contents of the **WEIGHTS** sheet (see below).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-cca, echo=FALSE, message=FALSE, warning=FALSE}
 FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
 FACTORS_CCA
 ```
@@ -68,7 +68,7 @@ FACTORS_CCA
 
 Load a table of weights for the factors from the **WEIGHTS** sheet in **input/community_cohort_inputs.xlsx**. Factors with non-zero weights will be included in the scoring. The larger the *absolute magnitude* of a factor, the more influence it will have on the overall score. Negative weights should be specified for factors where lower values correspond to lower need (i.e. the lowest values will receive the highest scores).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-weights, echo=FALSE, message=FALSE, warning=FALSE}
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 WEIGHTS
 ```
@@ -78,7 +78,7 @@ WEIGHTS
 
 Load a table of cohort thresholds from the **COHORTS** sheet in **input/community_cohort_inputs.xlsx**. These will be the maximum overall scores (from a possible range of 0-100) that will be assigned to a particular cohort.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r load-cohorts, echo=FALSE, message=FALSE, warning=FALSE}
 COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 COHORTS
@@ -89,7 +89,7 @@ COHORTS
 
 For each factor included in the `WEIGHTS` table, calculate the median and standard deviation from the **FACTORS_MUNI** table. Use these with specific z-scores to assign municpalities a score from 1-10, such that each group will roughly represent an equal number of municipalities (assuming the factor approximates a normal distribution). 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r weights, echo=FALSE, message=FALSE, warning=FALSE}
 WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median)[1,])
 WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd)[1,])
 
@@ -111,7 +111,7 @@ WEIGHTS <- WEIGHTS %>%
 
 For factors that do not approximate a normal distribution, make manual adjustments to the group thresholds as necessary to obtain sensible scores.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r weight-adj, echo=FALSE, message=FALSE, warning=FALSE}
 # Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
 WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- seq(0.1, 0.9, 0.1)
 WEIGHTS %>% select(FACTOR_NAME, WEIGHT, starts_with("CUT"), -CUT0, -CUT10)
@@ -122,7 +122,7 @@ WEIGHTS %>% select(FACTOR_NAME, WEIGHT, starts_with("CUT"), -CUT0, -CUT10)
 
 For each factor, use the calculated group thresholds to assign factor-specific scores to each municipality. Factors with negative weights will have their scores reversed so that the lowest values receive the highest scores. Inspect histograms of the factors, as well as the resultant scoring distributions
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.5}
+```{r scores, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.5}
 keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
 keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
 FACTORS_MUNI <- FACTORS_MUNI[, keep_cols_muni]
@@ -188,7 +188,7 @@ The same thresholds derived to assign scores to the municipalities will also be 
 
 The overall score is calculated for each community by multiplying each factor-specific score by the absolute magnitude of that factor's weight, summing these products, and then scaling the results so that the minimum and maximum theoretical scores (i.e. 1's and 10's for every factor-specific score, respectively) would receive overall scores of 0 and 100, respectively.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.7}
+```{r overall, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=0.7}
 FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
 FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
 
@@ -235,7 +235,7 @@ ggplot(FACTORS_CCA) +
 
 Create maps showing the final cohort assignment for each municipality and CCA.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.asp=1.3}
+```{r maps, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=1.3}
 IL_E_NAD83 <- 26971  # EPSG projection ID: IL State Plane East (NAD83)
 tmap_mode("plot")  # "plot" (static) or "view" (interactive)
 
@@ -277,7 +277,7 @@ Write overall scores and assigned cohorts for each municipality and CCA in the f
 
 ### output/cohort_assignments_muni.csv
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r write-muni, echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_MUNI <- FACTORS_MUNI %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
@@ -289,7 +289,7 @@ write_csv(OUT_DATA_MUNI, "output/cohort_assignments_muni.csv")
 
 ### output/cohort_assignments_cca.csv
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r write-cca, echo=FALSE, message=FALSE, warning=FALSE}
 OUT_DATA_CCA <- FACTORS_CCA %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
