@@ -198,7 +198,9 @@ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
 tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
           fontface=cmapplot_globals$font$strong$face,
-          fontfamily=cmapplot_globals$font$strong$family)
+          fontfamily=cmapplot_globals$font$strong$family,
+          legend.text.fontface=cmapplot_globals$font$regular$face,
+          legend.text.fontfamily=cmapplot_globals$font$regular$family)
 
 
 # Write output files ------------------------------------------------------
