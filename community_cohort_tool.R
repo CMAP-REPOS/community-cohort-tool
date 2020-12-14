@@ -118,7 +118,7 @@ max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
 FACTORS_MUNI <- FACTORS_MUNI %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_MUNI$COHORT <- cut(as.matrix(FACTORS_MUNI$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_MUNI$COHORT <- cut(as.vector(FACTORS_MUNI$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
 FACTORS_MUNI <- FACTORS_MUNI %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
@@ -137,7 +137,7 @@ ggplot(FACTORS_MUNI) +
 
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_CCA$COHORT <- cut(as.matrix(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_CCA$COHORT <- cut(as.vector(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
@@ -230,13 +230,15 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   rename(
 #     SCORE_PREV = WEIGHTED_SCORE,
 #     COHORT_PREV = COHORT
-#   )
+#   ) %>%
+#   select(MUNI, SCORE_PREV, COHORT_PREV)
 #
 # PREV_SCORES_CCA <- read_csv(prev_cca_csv, col_types=cols(COHORT=col_character())) %>%
 #   rename(
 #     SCORE_PREV = WEIGHTED_SCORE,
 #     COHORT_PREV = COHORT
-#   )
+#   ) %>%
+#   select(CCA_NAME, SCORE_PREV, COHORT_PREV)
 #
 # COMPARE_MUNI <- FACTORS_MUNI %>%
 #   left_join(PREV_SCORES_MUNI, by="MUNI") %>%
@@ -274,58 +276,66 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #
 # # Plots
 # ggplot(COMPARE_MUNI) +
-#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
+#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT), alpha=0.6, size=3) +
 #   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
 #   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   labs(title="Comparison of updated scores vs. previous scores (municipalities)") +
-#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
-#   guides(color=guide_legend(title="Previous cohort"))
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   labs(title="Updated vs. previous scores (municipalities)") +
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
+#              legend.position="right", legend.direction="vertical",
+#              legend.title=element_text()) +
+#   guides(color=guide_legend(title="Updated cohort"))
 #
 # ggplot(COMPARE_CCA) +
-#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT_PREV), alpha=0.6) +
+#   geom_point(aes(x=SCORE_PREV, y=SCORE_OVERALL_SCALED, color=COHORT), alpha=0.6, size=3) +
 #   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
 #   geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-#   labs(title="Comparison of updated scores vs. previous scores (CCAs)") +
-#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score") +
-#   guides(color=guide_legend(title="Previous cohort"))
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   labs(title="Updated vs. previous scores (CCAs)") +
+#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
+#              legend.position="right", legend.direction="vertical",
+#              legend.title=element_text()) +
+#   guides(color=guide_legend(title="Updated cohort"))
 #
 # ggplot(COMPARE_MUNI) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="#222222") +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
 #   scale_size_area(max_size = 20) +
-#   labs(title="Municipalities by previous and updated cohort") +
-#   theme_cmap(xlab="Previous cohort", ylab="Updated cohort")
+#   labs(title="Updated vs. previous cohorts (municipalities)") +
+#   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
+#              legend.position="right", legend.direction="vertical") +
+#   guides(color=guide_none())
 #
 # ggplot(COMPARE_CCA) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT), color="#222222") +
+#   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
 #   scale_size_area(max_size = 20) +
-#   labs(title="CCAs by previous and updated cohort") +
-#   theme_cmap(xlab="Previous cohort", ylab="Updated cohort")
+#   labs(title="Updated vs. previous cohorts (CCAs)") +
+#   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
+#              legend.position="right", legend.direction="vertical") +
+#   guides(color=guide_none())
 #
 # ggplot(COMPARE_MUNI) +
 #   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of updated cohorts vs. previous cohorts (municipalities)") +
+#   labs(title="Updated vs. previous cohorts (municipalities)") +
 #   theme_cmap(xlab="Cohort", ylab="Number of municipalities")
 #
 # ggplot(COMPARE_CCA) +
 #   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of updated cohorts vs. previous cohorts (CCAs)") +
+#   labs(title="Updated vs. previous cohorts (CCAs)") +
 #   theme_cmap(xlab="Cohort", ylab="Number of CCAs")
 #
 # COHORT_POP <- COMPARE_MUNI %>%
 #   select(COHORT, POP) %>%
 #   group_by(COHORT) %>%
-#   summarize(POP = sum(POP))
+#   summarize(POP = sum(POP), .groups="drop")
 #
 # COHORT_POP_PREV <- COMPARE_MUNI %>%
 #   select(COHORT_PREV, POP) %>%
 #   group_by(COHORT_PREV) %>%
-#   summarize(POP = sum(POP))
+#   summarize(POP = sum(POP), .groups="drop")
 #
 # COHORT_POP_CHG <- COHORT_POP %>%
 #   left_join(COHORT_POP_PREV, by=c("COHORT" = "COHORT_PREV"), suffix=c("", "_PREV"))
@@ -333,7 +343,8 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 # ggplot(COHORT_POP_CHG) +
 #   geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
 #   geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Comparison of population in updated cohorts vs. previous cohorts (municipalities)") +
+#   labs(title="Population in updated vs. previous cohorts (municipalities)") +
+#   scale_y_continuous(labels=scales::label_comma()) +
 #   theme_cmap(xlab="Cohort", ylab="Total population")
 #
 # # Maps
@@ -463,3 +474,4 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #   rename(`Updated Cohort` = `Cohort`) %>%
 #   select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
 #   write_csv("output/Memo - CCAs - Trending Down.csv")
+
