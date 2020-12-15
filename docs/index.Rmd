@@ -90,7 +90,7 @@ COHORTS
 
 # Calculate factor-specific scoring thresholds
 
-For each factor included in the `WEIGHTS` table, calculate the median and standard deviation from the **FACTORS_MUNI** table. Use these with specific z-scores to assign municpalities a score from 1-10, such that each group will roughly represent an equal number of municipalities (assuming the factor approximates a normal distribution). 
+For each factor included in the `WEIGHTS` table, calculate the median and standard deviation from the **FACTORS_MUNI** table. Use these with specific z-scores to assign municpalities a score from 1-10, such that each group will roughly represent an equal number of municipalities (assuming the factor approximates a normal distribution).
 
 ```{r weights, echo=FALSE, message=FALSE, warning=FALSE}
 WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median)[1,])
@@ -304,7 +304,7 @@ OUT_DATA_MUNI <- FACTORS_MUNI %>%
   select(-SCORE_OVERALL)
 OUT_DATA_MUNI
 
-write_csv(OUT_DATA_MUNI, "../output/cohort_assignments_muni.csv")
+#write_csv(OUT_DATA_MUNI, "../output/cohort_assignments_muni.csv")
 ```
 
 ### output/cohort_assignments_cca.csv
@@ -316,5 +316,5 @@ OUT_DATA_CCA <- FACTORS_CCA %>%
   select(-SCORE_OVERALL)
 OUT_DATA_CCA
 
-write_csv(OUT_DATA_CCA, "../output/cohort_assignments_cca.csv")
+#write_csv(OUT_DATA_CCA, "../output/cohort_assignments_cca.csv")
 ```
