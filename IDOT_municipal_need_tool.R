@@ -21,8 +21,8 @@ WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 
 # Calculate factor-specific scoring thresholds ----------------------------
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd)[1,])
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm = TRUE)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm = TRUE)[1,])
 
 WEIGHTS <- WEIGHTS %>%
   mutate(
@@ -136,8 +136,8 @@ muni_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
 
 tm_shape(muni_geo, bbox=bb(il_geo, ext=1.2)) +
   tm_polygons(col="MUNI_NEED_SCORE", title="Municipality Need Score", id="NAME",
-              popup.vars=append("MUNI_NEED_SCORE", score_cols),
-              n=10, border.col="#cccccc", lwd=0.5) +
+              palette="-magma", n=10, border.col="#cccccc", lwd=0.5,
+              popup.vars=append("MUNI_NEED_SCORE", score_cols), legend.reverse=TRUE) +
 tm_shape(il_geo) +
   tm_borders(col="#888888", lwd=2)
 
@@ -148,6 +148,17 @@ OUT_DATA_MUNI <- FACTORS_MUNI %>%
   select(GEOID, MUNI, MUNI_NEED_SCORE, starts_with("SCORE_"))
 
 write_csv(OUT_DATA_MUNI, paste0(getwd(), "/output/municipality_need_scores_", ANALYSIS_YEAR, ".csv"))
+
+# Export shapefile
+OUT_SHP <- paste0(getwd(), "/output/IDOT_muni_need_scores_DRAFT.shp")
+muni_geo %>%
+  select(append("MUNI_NEED_SCORE", score_cols)) %>%
+  rename(MUNI_NEED = MUNI_NEED_SCORE,
+         D_MED_INC = SCORE_ln_MED_HH_INC,
+         D_EAV_PC = SCORE_ln_NF_TIF_EAV_PER_CAP,
+         D_SVI_SES = SCORE_SVI_SES,
+         D_SVI_MSL = SCORE_ln_SVI_MSL) %>%
+  st_write(OUT_SHP)
 
 
 # # Compare scores/cohorts against previous year ----------------------------
