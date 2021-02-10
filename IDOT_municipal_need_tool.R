@@ -24,6 +24,13 @@ WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm = TRUE)[1,])
 WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm = TRUE)[1,])
 
+# Exclude 0% vacancy rate from median/sd calculations
+VAC_NONZERO <- FACTORS_MUNI %>%
+  filter(ln_VAC_RATE > log(0.0001)) %>%
+  .$ln_VAC_RATE
+WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "MED"] <- median(VAC_NONZERO)
+WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "SD"] <- sd(VAC_NONZERO)
+
 WEIGHTS <- WEIGHTS %>%
   mutate(
     CUT0 = -Inf,
@@ -41,6 +48,9 @@ WEIGHTS <- WEIGHTS %>%
 
 # Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
 WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EJ_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
+
+# Give 0% vacancy rate its own group
+WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "CUT1"] <- log(0.0001)
 
 
 # Calculate factor-specific scores ----------------------------------------
@@ -142,167 +152,123 @@ tm_shape(il_geo) +
   tm_borders(col="#888888", lwd=2)
 
 
-# Write output files ------------------------------------------------------
-
-OUT_DATA_MUNI <- FACTORS_MUNI %>%
-  select(GEOID, MUNI, MUNI_NEED_SCORE, starts_with("SCORE_"))
-
-write_csv(OUT_DATA_MUNI, paste0(getwd(), "/output/municipality_need_scores_", ANALYSIS_YEAR, ".csv"))
-
-# Export shapefile
-OUT_SHP <- paste0(getwd(), "/output/IDOT_muni_need_scores_DRAFT.shp")
-muni_geo %>%
-  select(append("MUNI_NEED_SCORE", score_cols)) %>%
-  rename(MUNI_NEED = MUNI_NEED_SCORE,
-         D_MED_INC = SCORE_ln_MED_HH_INC,
-         D_EAV_PC = SCORE_ln_NF_TIF_EAV_PER_CAP,
-         D_SVI_SES = SCORE_SVI_SES,
-         D_SVI_MSL = SCORE_ln_SVI_MSL) %>%
-  st_write(OUT_SHP)
+# # Write output files ------------------------------------------------------
+#
+# OUT_DATA_MUNI <- FACTORS_MUNI %>%
+#   select(GEOID, MUNI, MUNI_NEED_SCORE, starts_with("SCORE_"))
+#
+# write_csv(OUT_DATA_MUNI, paste0("output/municipality_need_scores_", ANALYSIS_YEAR, ".csv"))
+#
+# # Export shapefile
+# OUT_SHP <- paste0("output/IDOT_muni_need_scores_", ANALYSIS_YEAR, "_DRAFT.shp")
+# muni_geo %>%
+#   select(append("MUNI_NEED_SCORE", score_cols)) %>%
+#   rename(MUNI_NEED = MUNI_NEED_SCORE,
+#          #D_MED_INC = SCORE_ln_MED_HH_INC,
+#          D_EAV_PC = SCORE_ln_NF_TIF_EAV_PER_CAP,
+#          D_SVI_SES = SCORE_SVI_SES,
+#          D_SVI_MSL = SCORE_ln_SVI_MSL) %>%
+#   st_write(OUT_SHP)
 
 
 # # Compare scores/cohorts against previous year ----------------------------
 #
 # prev_year <- ANALYSIS_YEAR - 1
-# prev_muni_csv <- paste0("output/archive/municipality_need_scores_", prev_year, ".csv")
+# prev_muni_csv <- paste0("output/municipality_need_scores_", prev_year, ".csv")
 #
-# PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT=col_character())) %>%
-#   rename(
-#     SCORE_PREV = WEIGHTED_SCORE,
-#     COHORT_PREV = COHORT
-#   ) %>%
-#   select(MUNI, SCORE_PREV, COHORT_PREV)
+# PREV_SCORES_MUNI <- read_csv(prev_muni_csv) %>%
+#   rename(SCORE_PREV = MUNI_NEED_SCORE) %>%
+#   select(GEOID, MUNI, SCORE_PREV)
 #
 # COMPARE_MUNI <- FACTORS_MUNI %>%
-#   left_join(PREV_SCORES_MUNI, by="MUNI") %>%
-#   mutate(
-#     COHORT_CHG = as.numeric(COHORT) - as.numeric(COHORT_PREV),
-#     POP = exp(ln_POP)
-#   )
-#
-# CHANGED_MUNIS <- COMPARE_MUNI[COMPARE_MUNI$COHORT != COMPARE_MUNI$COHORT_PREV, c("MUNI", "MUNI_NEED_SCORE", "COHORT", "COHORT_PREV", "POP")]
-# CHANGED_MUNIS
+#   select(GEOID, MUNI, MUNI_NEED_SCORE) %>%
+#   left_join(PREV_SCORES_MUNI, by="GEOID") %>%
+#   mutate(SCORE_CHANGE = MUNI_NEED_SCORE - SCORE_PREV)
 #
 # # Descriptive statistics
 # library(modelr)
 #
 # cat("MUNICIPALITIES")
 # lm_muni <- lm(MUNI_NEED_SCORE ~ SCORE_PREV, data=COMPARE_MUNI)
-# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$MUNI_NEED_SCORE))
+# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$MUNI_NEED_SCORE, use="pairwise.complete.obs"))
 # cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
 # cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
 #
 # # Plots
 # ggplot(COMPARE_MUNI) +
-#   geom_point(aes(x=SCORE_PREV, y=MUNI_NEED_SCORE, color=COHORT), alpha=0.6, size=3) +
+#   geom_point(aes(x=SCORE_PREV, y=MUNI_NEED_SCORE), alpha=0.6, size=3) +
 #   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
 #   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
 #   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
 #   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   labs(title="Updated vs. previous scores (municipalities)") +
+#   labs(title="Updated vs. previous municipality need scores") +
 #   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
 #              legend.position="right", legend.direction="vertical",
-#              legend.title=element_text()) +
-#   guides(color=guide_legend(title="Updated cohort"))
-#
-# ggplot(COMPARE_MUNI) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
-#   scale_size_area(max_size = 20) +
-#   labs(title="Updated vs. previous cohorts (municipalities)") +
-#   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
-#              legend.position="right", legend.direction="vertical") +
-#   guides(color=guide_none())
-#
-# ggplot(COMPARE_MUNI) +
-#   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
-#   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Updated vs. previous cohorts (municipalities)") +
-#   theme_cmap(xlab="Cohort", ylab="Number of municipalities")
-#
-# COHORT_POP <- COMPARE_MUNI %>%
-#   select(COHORT, POP) %>%
-#   group_by(COHORT) %>%
-#   summarize(POP = sum(POP), .groups="drop")
-#
-# COHORT_POP_PREV <- COMPARE_MUNI %>%
-#   select(COHORT_PREV, POP) %>%
-#   group_by(COHORT_PREV) %>%
-#   summarize(POP = sum(POP), .groups="drop")
-#
-# COHORT_POP_CHG <- COHORT_POP %>%
-#   left_join(COHORT_POP_PREV, by=c("COHORT" = "COHORT_PREV"), suffix=c("", "_PREV"))
-#
-# ggplot(COHORT_POP_CHG) +
-#   geom_col(aes(x=COHORT, y=POP_PREV, fill="Previous"), width=0.4, position=position_nudge(x=-0.2)) +
-#   geom_col(aes(x=COHORT, y=POP, fill="Updated"), width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Population in updated vs. previous cohorts (municipalities)") +
-#   scale_y_continuous(labels=scales::label_comma()) +
-#   theme_cmap(xlab="Cohort", ylab="Total population")
+#              legend.title=element_text())
 #
 # # Maps
-# muni_geo <- st_read("input/cmap_munis.geojson", quiet=TRUE) %>%
+# muni_chg_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
 #   st_transform(IL_E_NAD83) %>%
+#   mutate(GEOID_n = as.numeric(GEOID)) %>%
 #   left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
 #
-# tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
-#               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-#               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
-# tm_shape(cnty_geo) +
-#   tm_lines(col="#888888", lwd=2) +
-# # tm_shape(muni_labels) +
-# #   tm_text("MUNI.x", size=0.7, col="#000000") +
-# tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
-#           fontface=cmapplot_globals$font$strong$face,
-#           fontfamily=cmapplot_globals$font$strong$family,
-#           legend.text.fontface=cmapplot_globals$font$regular$face,
-#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
+# tm_shape(muni_chg_geo) +
+#   tm_polygons("SCORE_CHANGE", id="NAME", palette="-PuOr", contrast=c(0,1), midpoint=0,
+#               popup.vars=c("MUNI_NEED_SCORE", "SCORE_PREV", "SCORE_CHANGE"),
+#               border.col="#cccccc", lwd=0.5) +
+#   tm_shape(il_geo) +
+#     tm_borders(col="#888888", lwd=2)
+
+
+
+
+
+
+
+
+
+# # Compare scores/cohorts against CMAP cohorts ----------------------------
 #
+# cmap_muni_csv <- paste0("output/cohort_assignments_muni_2021.csv")
 #
-# # Tables for memo ---------------------------------------------------------
+# CMAP_SCORES_MUNI <- read_csv(cmap_muni_csv) %>%
+#   mutate(SCORE_CMAP = 100 - WEIGHTED_SCORE) %>%
+#   select(GEOID, SCORE_CMAP)
 #
-# MEMO_MUNI <- COMPARE_MUNI %>%
-#   mutate(
-#     POP = exp(ln_POP),
-#     TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
-#     MED_HH_INC = exp(ln_MED_HH_INC),
-#     COHORT_NAME = paste("Cohort", COHORT),
-#     PREV_COHORT_NAME = paste("Cohort", COHORT_PREV)
-#   ) %>%
-#   select(MUNI, COHORT_NAME, PREV_COHORT_NAME, COHORT_CHG, MUNI_NEED_SCORE,
-#          MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EJ_POP) %>%
-#   rename(
-#     `Community Name` = MUNI,
-#     `Cohort` = COHORT_NAME,
-#     `Previous Cohort` = PREV_COHORT_NAME,
-#     `Change in Cohort` = COHORT_CHG,
-#     `Overall Score` = MUNI_NEED_SCORE,
-#     `Median Income` = MED_HH_INC,
-#     `Population` = POP,
-#     `Tax Base Per Capita` = TAX_BASE_PER_CAP,
-#     `Population in EJ Areas` = PCT_EJ_POP
-#   )
+# COMPARE_MUNI <- FACTORS_MUNI %>%
+#   select(GEOID, MUNI, MUNI_NEED_SCORE) %>%
+#   rename(SCORE_IDOT = MUNI_NEED_SCORE) %>%
+#   right_join(CMAP_SCORES_MUNI, by="GEOID") %>%
+#   mutate(SCORE_CHANGE = SCORE_IDOT - SCORE_CMAP)
 #
-# for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
-#   MEMO_MUNI %>%
-#     filter(`Cohort` == cohort_name) %>%
-#     select(-`Cohort`, -`Previous Cohort`, -`Change in Cohort`, -`Overall Score`) %>%
-#     write_csv(paste0("output/Memo - Municipalities - ", cohort_name, ".csv"))
-# }
+# # Descriptive statistics
+# library(modelr)
 #
-# MEMO_MUNI %>%
-#   select(`Community Name`, `Cohort`, `Overall Score`) %>%
-#   write_csv("output/Memo - Municipalities - All Cohorts - Scores.csv")
+# cat("MUNICIPALITIES")
+# lm_muni <- lm(SCORE_IDOT ~ SCORE_CMAP, data=COMPARE_MUNI)
+# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_CMAP, COMPARE_MUNI$SCORE_IDOT, use="pairwise.complete.obs"))
+# cat("Linear trend: SCORE_IDOT = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_CMAP", sep="")
+# cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
 #
-# MEMO_MUNI %>%
-#   filter(`Change in Cohort` < 0) %>%
-#   rename(`Updated Cohort` = `Cohort`) %>%
-#   select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
-#   write_csv("output/Memo - Municipalities - Trending Up.csv")
+# # Plots
+# ggplot(COMPARE_MUNI) +
+#   geom_point(aes(x=SCORE_CMAP, y=SCORE_IDOT), alpha=0.6, size=3) +
+#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
+#   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+#   labs(title="IDOT vs. CMAP municipality need scores") +
+#   theme_cmap(gridlines="hv", xlab="CMAP score", ylab="IDOT score",
+#              legend.position="right", legend.direction="vertical",
+#              legend.title=element_text())
 #
-# MEMO_MUNI %>%
-#   filter(`Change in Cohort` > 0) %>%
-#   rename(`Updated Cohort` = `Cohort`) %>%
-#   select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
-#   write_csv("output/Memo - Municipalities - Trending Down.csv")
+# # Maps
+# muni_chg_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
+#   st_transform(IL_E_NAD83) %>%
+#   mutate(GEOID_n = as.numeric(GEOID)) %>%
+#   right_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
+#
+# tm_shape(muni_chg_geo) +
+#   tm_polygons("SCORE_CHANGE", id="NAME", palette="-PuOr", contrast=c(0,1), midpoint=0,
+#               popup.vars=c("SCORE_IDOT", "SCORE_CMAP", "SCORE_CHANGE"),
+#               border.col="#cccccc", lwd=0.5)
