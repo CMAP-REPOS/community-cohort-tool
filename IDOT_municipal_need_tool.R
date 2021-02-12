@@ -194,16 +194,16 @@ get_factor_themes <- function(score_cols) {
 }
 
 OUT_DATA_MUNI <- FACTORS_MUNI %>%
-  select(GEOID, MUNI, POP, COHORT, starts_with("SCORE_")) %>%
+  select(GEOID, MUNI, COHORT, POP, starts_with("SCORE_")) %>%
   rename(
     `Municipality` = MUNI,
-    `Population` = POP,
-    `Need Cohort` = COHORT
+    `Need Cohort` = COHORT,
+    `Population` = POP
   ) %>%
   rename_with(.fn = get_factor_themes,
               .cols = starts_with("SCORE_"))
 
-write_csv(OUT_DATA_MUNI, paste0("output/municipality_need_cohorts_", ANALYSIS_YEAR, ".csv"))
+write_csv(OUT_DATA_MUNI, paste0("output/municipality_need_cohorts_", ANALYSIS_YEAR, ".csv"), na="")
 
 
 
