@@ -1,4 +1,22 @@
-#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
+###############################################################################
+# IDOT MUNICIPAL NEED SCORING TOOL
+# --------------------------------
+# Last updated: 2021-02-12
+
+# Created for IDOT by your friends at CMAP
+
+####### UUUUUUUU       __
+####### :UUUUUUU      /  |_ . _ _  _  _   |\/| _|_ _ _  _  _ |.|_ _  _
+#######. :UUUUUU      \__| )|(_(_|(_)(_)  |  |(-|_| (_)|_)(_)|||_(_|| )
+########  :UUUUU                  _/                   |
+#########:  :UUU                         _        __
+##########:    '       /\  _  _ _  _    (_ _  _  |__)| _  _  _ . _  _
+#############:.       /--\(_)(-| )(_\/  | (_)|   |   |(_|| )| )|| )(_)
+################          _/        /                              _/
+
+###############################################################################
+
+#install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools", "GGally")
 #devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
 library(tidyverse)
 library(readxl)
@@ -21,15 +39,8 @@ WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 
 # Calculate factor-specific scoring thresholds ----------------------------
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm = TRUE)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm = TRUE)[1,])
-
-# Exclude 0% vacancy rate from median/sd calculations
-VAC_NONZERO <- FACTORS_MUNI %>%
-  filter(ln_VAC_RATE > log(0.0001)) %>%
-  .$ln_VAC_RATE
-WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "MED"] <- median(VAC_NONZERO)
-WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "SD"] <- sd(VAC_NONZERO)
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], median, na.rm=TRUE)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI[, WEIGHTS$FACTOR_NAME], sd, na.rm=TRUE)[1,])
 
 WEIGHTS <- WEIGHTS %>%
   mutate(
@@ -46,16 +57,10 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
-# Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
-WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EJ_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
-
-# Give 0% vacancy rate its own group
-WEIGHTS[WEIGHTS$FACTOR_NAME=="ln_VAC_RATE", "CUT1"] <- log(0.0001)
-
 
 # Calculate factor-specific scores ----------------------------------------
 
-keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
+keep_cols_muni <- append(c("GEOID", "MUNI", "POP"), WEIGHTS$FACTOR_NAME)
 FACTORS_MUNI <- FACTORS_MUNI[, keep_cols_muni]
 
 score_cols <- c()
@@ -80,7 +85,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   }
   FACTORS_MUNI[, wt_score_col] <- FACTORS_MUNI[, score_col] * abs(weight)
 
-  # Inspect score distribution
+  # Inspect factor distribution
   print(
     ggplot(FACTORS_MUNI) +
       geom_histogram(aes(x=get(factor)), color="#222222", fill="#73c9e3", size=0.3, bins=50) +
@@ -97,6 +102,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
       theme_cmap(hline=0, ylab="Number of municipalities")
   )
 
+  # Inspect score distribution
   print(
     ggplot(FACTORS_MUNI) +
       geom_histogram(aes(x=get(score_col)), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
@@ -108,27 +114,98 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   )
 }
 
+# Plot distributions of and correlations between factors
+FACTORS_MUNI[, WEIGHTS$FACTOR_NAME] %>%
+  GGally::ggpairs()
 
-# Calculate overall score & cohorts ---------------------------------------
+
+# Calculate overall score (0-100) -----------------------------------------
 
 FACTORS_MUNI$WEIGHTED_SCORE <- rowSums(FACTORS_MUNI[, wt_score_cols])
 
-# Rescale from 0-100, and invert relationship (0=low need, 100=high need)
+# Rescale from 0-100
 min_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 1
 max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
 FACTORS_MUNI <- FACTORS_MUNI %>%
-  mutate(MUNI_NEED_SCORE = 100 - ((WEIGHTED_SCORE - min_wt_score) / (max_wt_score - min_wt_score) * 100))
+  mutate(MUNI_NEED_SCORE = ((WEIGHTED_SCORE - min_wt_score) / (max_wt_score - min_wt_score) * 100))
 
 bin_width = 100 / (max_wt_score - min_wt_score)
 bin_center = bin_width / 2
 
+# Inspect score distribution
 ggplot(FACTORS_MUNI) +
   geom_histogram(aes(x=MUNI_NEED_SCORE), color="#222222", fill="#73c9e3", size=0.3,
                  binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
   labs(title="Distribution of municipality need scores") +
   theme_cmap(hline=0, ylab="Number of municipalities")
+
+
+# Assign scores to cohorts (1-5) ------------------------------------------
+
+# Calculate approximate quintile thresholds (note: exact quintiles will
+# probably not be obtained, given that only a fixed number of overall scores
+# are possible, with groups of municipalities sharing identical scores)
+SCORE_MED <- median(FACTORS_MUNI$MUNI_NEED_SCORE, na.rm=TRUE)
+SCORE_SD <- sd(FACTORS_MUNI$MUNI_NEED_SCORE, na.rm=TRUE)
+COHORTS <- append(
+  c(-Inf, Inf),
+  quantile(FACTORS_MUNI$MUNI_NEED_SCORE, probs=seq(0.2, 0.8, 0.2), na.rm=TRUE),
+  after=1
+)
+
+FACTORS_MUNI$COHORT <- cut(as.matrix(FACTORS_MUNI$MUNI_NEED_SCORE), COHORTS, 1:5, labels=FALSE)
+
+ggplot(FACTORS_MUNI) +
+  geom_histogram(aes(x=MUNI_NEED_SCORE), color="#222222", fill="#73c9e3", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
+  geom_vline(xintercept=COHORTS[[2]], color="#222222", linetype="longdash", size=1) +
+  geom_vline(xintercept=COHORTS[[3]], color="#222222", linetype="longdash", size=1) +
+  geom_vline(xintercept=COHORTS[[4]], color="#222222", linetype="longdash", size=1) +
+  geom_vline(xintercept=COHORTS[[5]], color="#222222", linetype="longdash", size=1) +
+  geom_label(x=0+(COHORTS[[2]]-0)/2, y=25, label="1") +
+  geom_label(x=COHORTS[[2]]+(COHORTS[[3]]-COHORTS[[2]])/2, y=25, label="2") +
+  geom_label(x=COHORTS[[3]]+(COHORTS[[4]]-COHORTS[[3]])/2, y=25, label="3") +
+  geom_label(x=COHORTS[[4]]+(COHORTS[[5]]-COHORTS[[4]])/2, y=25, label="4") +
+  geom_label(x=COHORTS[[5]]+(100-COHORTS[[5]])/2, y=25, label="5") +
+  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+  labs(title="Distribution of municipality need scores (with cohort breaks)") +
+  theme_cmap(hline=0, ylab="Number of municipalities")
+
+ggplot(FACTORS_MUNI) +
+  geom_histogram(aes(x=COHORT), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
+  geom_hline(yintercept=259.6, color="#222222", size=0.5, linetype="dashed") +
+  labs(title="Distribution of municipality need cohorts",
+       caption="Note: Dashed line represents a perfect quintile distribution of 259.6 municipalities per group.") +
+  theme_cmap(hline=0, ylab="Number of municipalities")
+
+
+# Write output CSV --------------------------------------------------------
+
+get_factor_themes <- function(score_cols) {
+  factor_cols <- str_replace(score_cols, "SCORE_", "")
+  factor_themes <- c()
+  for (i in 1:length(factor_cols)) {
+    factor = factor_cols[i]
+    factor_themes[i] <- WEIGHTS[WEIGHTS$FACTOR_NAME==factor, "FACTOR_THEME"][[1]]
+  }
+  return(factor_themes)
+}
+
+OUT_DATA_MUNI <- FACTORS_MUNI %>%
+  select(GEOID, MUNI, POP, COHORT, starts_with("SCORE_")) %>%
+  rename(
+    `Municipality` = MUNI,
+    `Population` = POP,
+    `Need Cohort` = COHORT
+  ) %>%
+  rename_with(.fn = get_factor_themes,
+              .cols = starts_with("SCORE_"))
+
+write_csv(OUT_DATA_MUNI, paste0("output/municipality_need_cohorts_", ANALYSIS_YEAR, ".csv"))
+
+
 
 
 # Map the results ---------------------------------------------------------
@@ -142,133 +219,29 @@ il_geo <- st_read("input/illinois.geojson", quiet=TRUE) %>%
 muni_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
   st_transform(IL_E_NAD83) %>%
   mutate(GEOID_n = as.numeric(GEOID)) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID"))
+  left_join(OUT_DATA_MUNI, by=c("GEOID_n"="GEOID")) %>%
+  mutate(COHORT_n = as.double(`Need Cohort`))
 
-tm_shape(muni_geo, bbox=bb(il_geo, ext=1.2)) +
-  tm_polygons(col="MUNI_NEED_SCORE", title="Municipality Need Score", id="NAME",
-              palette="-magma", n=10, border.col="#cccccc", lwd=0.5,
-              popup.vars=append("MUNI_NEED_SCORE", score_cols), legend.reverse=TRUE) +
-tm_shape(il_geo) +
-  tm_borders(col="#888888", lwd=2)
+# Map each individual factor's scores
+for (i in 1:length(score_cols)) {
+  factor <- get_factor_themes(score_cols)[i]
+  score_labels <- append(c("1 - lowest need", "10 - highest need"), 2:9, after=1)
+  print(
+    tm_shape(muni_geo) +
+      tm_polygons(col=factor, id="NAME", textNA="No data",
+                  palette="-magma", border.col="#cccccc", lwd=0.5, style="equal",
+                  n=10, labels=score_labels, legend.reverse=TRUE) +
+      tm_shape(il_geo) +
+        tm_borders(col="#888888", lwd=2)
+  )
+}
 
-
-# # Write output files ------------------------------------------------------
-#
-# OUT_DATA_MUNI <- FACTORS_MUNI %>%
-#   select(GEOID, MUNI, MUNI_NEED_SCORE, starts_with("SCORE_"))
-#
-# write_csv(OUT_DATA_MUNI, paste0("output/municipality_need_scores_", ANALYSIS_YEAR, ".csv"))
-#
-# # Export shapefile
-# OUT_SHP <- paste0("output/IDOT_muni_need_scores_", ANALYSIS_YEAR, "_DRAFT.shp")
-# muni_geo %>%
-#   select(append("MUNI_NEED_SCORE", score_cols)) %>%
-#   rename(MUNI_NEED = MUNI_NEED_SCORE,
-#          #D_MED_INC = SCORE_ln_MED_HH_INC,
-#          D_EAV_PC = SCORE_ln_NF_TIF_EAV_PER_CAP,
-#          D_SVI_SES = SCORE_SVI_SES,
-#          D_SVI_MSL = SCORE_ln_SVI_MSL) %>%
-#   st_write(OUT_SHP)
-
-
-# # Compare scores/cohorts against previous year ----------------------------
-#
-# prev_year <- ANALYSIS_YEAR - 1
-# prev_muni_csv <- paste0("output/municipality_need_scores_", prev_year, ".csv")
-#
-# PREV_SCORES_MUNI <- read_csv(prev_muni_csv) %>%
-#   rename(SCORE_PREV = MUNI_NEED_SCORE) %>%
-#   select(GEOID, MUNI, SCORE_PREV)
-#
-# COMPARE_MUNI <- FACTORS_MUNI %>%
-#   select(GEOID, MUNI, MUNI_NEED_SCORE) %>%
-#   left_join(PREV_SCORES_MUNI, by="GEOID") %>%
-#   mutate(SCORE_CHANGE = MUNI_NEED_SCORE - SCORE_PREV)
-#
-# # Descriptive statistics
-# library(modelr)
-#
-# cat("MUNICIPALITIES")
-# lm_muni <- lm(MUNI_NEED_SCORE ~ SCORE_PREV, data=COMPARE_MUNI)
-# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$MUNI_NEED_SCORE, use="pairwise.complete.obs"))
-# cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
-# cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
-#
-# # Plots
-# ggplot(COMPARE_MUNI) +
-#   geom_point(aes(x=SCORE_PREV, y=MUNI_NEED_SCORE), alpha=0.6, size=3) +
-#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-#   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   labs(title="Updated vs. previous municipality need scores") +
-#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
-#              legend.position="right", legend.direction="vertical",
-#              legend.title=element_text())
-#
-# # Maps
-# muni_chg_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
-#   st_transform(IL_E_NAD83) %>%
-#   mutate(GEOID_n = as.numeric(GEOID)) %>%
-#   left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
-#
-# tm_shape(muni_chg_geo) +
-#   tm_polygons("SCORE_CHANGE", id="NAME", palette="-PuOr", contrast=c(0,1), midpoint=0,
-#               popup.vars=c("MUNI_NEED_SCORE", "SCORE_PREV", "SCORE_CHANGE"),
-#               border.col="#cccccc", lwd=0.5) +
-#   tm_shape(il_geo) +
-#     tm_borders(col="#888888", lwd=2)
-
-
-
-
-
-
-
-
-
-# # Compare scores/cohorts against CMAP cohorts ----------------------------
-#
-# cmap_muni_csv <- paste0("output/cohort_assignments_muni_2021.csv")
-#
-# CMAP_SCORES_MUNI <- read_csv(cmap_muni_csv) %>%
-#   mutate(SCORE_CMAP = 100 - WEIGHTED_SCORE) %>%
-#   select(GEOID, SCORE_CMAP)
-#
-# COMPARE_MUNI <- FACTORS_MUNI %>%
-#   select(GEOID, MUNI, MUNI_NEED_SCORE) %>%
-#   rename(SCORE_IDOT = MUNI_NEED_SCORE) %>%
-#   right_join(CMAP_SCORES_MUNI, by="GEOID") %>%
-#   mutate(SCORE_CHANGE = SCORE_IDOT - SCORE_CMAP)
-#
-# # Descriptive statistics
-# library(modelr)
-#
-# cat("MUNICIPALITIES")
-# lm_muni <- lm(SCORE_IDOT ~ SCORE_CMAP, data=COMPARE_MUNI)
-# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_CMAP, COMPARE_MUNI$SCORE_IDOT, use="pairwise.complete.obs"))
-# cat("Linear trend: SCORE_IDOT = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_CMAP", sep="")
-# cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
-#
-# # Plots
-# ggplot(COMPARE_MUNI) +
-#   geom_point(aes(x=SCORE_CMAP, y=SCORE_IDOT), alpha=0.6, size=3) +
-#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-#   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   labs(title="IDOT vs. CMAP municipality need scores") +
-#   theme_cmap(gridlines="hv", xlab="CMAP score", ylab="IDOT score",
-#              legend.position="right", legend.direction="vertical",
-#              legend.title=element_text())
-#
-# # Maps
-# muni_chg_geo <- st_read("input/municipalities.geojson", quiet=TRUE) %>%
-#   st_transform(IL_E_NAD83) %>%
-#   mutate(GEOID_n = as.numeric(GEOID)) %>%
-#   right_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
-#
-# tm_shape(muni_chg_geo) +
-#   tm_polygons("SCORE_CHANGE", id="NAME", palette="-PuOr", contrast=c(0,1), midpoint=0,
-#               popup.vars=c("SCORE_IDOT", "SCORE_CMAP", "SCORE_CHANGE"),
-#               border.col="#cccccc", lwd=0.5)
+# Map the assigned cohorts
+cohort_labels <- score_labels <- append(c("1 - lowest need", "5 - highest need"), 2:4, after=1)
+tm_shape(muni_geo) +
+  tm_polygons(col="COHORT_n", title="Municipality Need Cohort", id="NAME", textNA="Insufficient data",
+              palette="-magma", border.col="#cccccc", lwd=0.5, style="equal",
+              n=5, labels=cohort_labels, legend.reverse=TRUE,
+              popup.vars=append(c("Need Cohort", "Population"), get_factor_themes(score_cols))) +
+  tm_shape(il_geo) +
+    tm_borders(col="#888888", lwd=2)
