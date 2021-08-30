@@ -186,10 +186,10 @@ tm_shape(cnty_geo) +
 #   tm_text("MUNI.x", size=0.7, col="#000000") +
 tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE,
-          fontface=cmapplot_globals$font$strong$face,
-          fontfamily=cmapplot_globals$font$strong$family,
-          legend.text.fontface=cmapplot_globals$font$regular$face,
-          legend.text.fontfamily=cmapplot_globals$font$regular$family)
+          fontface=get_cmapplot_global("font$strong$face"),
+          fontfamily=get_cmapplot_global("font$strong$family"),
+          legend.text.fontface=get_cmapplot_global("font$regular$face"),
+          legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
@@ -197,10 +197,10 @@ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_legend(legend.position=c("left", "bottom")) +
 tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
-          fontface=cmapplot_globals$font$strong$face,
-          fontfamily=cmapplot_globals$font$strong$family,
-          legend.text.fontface=cmapplot_globals$font$regular$face,
-          legend.text.fontfamily=cmapplot_globals$font$regular$family)
+          fontface=get_cmapplot_global("font$strong$face"),
+          fontfamily=get_cmapplot_global("font$strong$family"),
+          legend.text.fontface=get_cmapplot_global("font$regular$face"),
+          legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 
 # Write output files ------------------------------------------------------
@@ -366,10 +366,10 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 # #   tm_text("MUNI.x", size=0.7, col="#000000") +
 # tm_legend(legend.position=c("left", "bottom")) +
 # tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
-#           fontface=cmapplot_globals$font$strong$face,
-#           fontfamily=cmapplot_globals$font$strong$family,
-#           legend.text.fontface=cmapplot_globals$font$regular$face,
-#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
+#           fontface=get_cmapplot_global("font$strong$face"),
+#           fontfamily=get_cmapplot_global("font$strong$family"),
+#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 #
 # tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
 #   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
@@ -377,10 +377,10 @@ write_csv(OUT_DATA_CCA, "output/cohort_assignments_cca.csv")
 #               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
 # tm_legend(legend.position=c("left", "bottom")) +
 # tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
-#           fontface=cmapplot_globals$font$strong$face,
-#           fontfamily=cmapplot_globals$font$strong$family,
-#           legend.text.fontface=cmapplot_globals$font$regular$face,
-#           legend.text.fontfamily=cmapplot_globals$font$regular$family)
+#           fontface=get_cmapplot_global("font$strong$face"),
+#           fontfamily=get_cmapplot_global("font$strong$family"),
+#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 
 # # Tables for memo ---------------------------------------------------------
