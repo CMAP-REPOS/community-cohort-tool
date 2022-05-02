@@ -493,7 +493,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
 # for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
 #   MEMO_CCA %>%
 #     filter(`Cohort` == cohort_name) %>%
-#     select(-`Cohort`, -`Previous Cohort`, -`Change in Cohort`, -`Overall Score`) %>% #, -`Population`) %>%
+#     select(-`Cohort`, -`Previous Cohort`, -`Change in Cohort`, -`Overall Score`, -`Population`) %>%
 #     write_csv(paste0("output/memo/Memo - CCAs - ", cohort_name, ".csv"))
 # }
 #
