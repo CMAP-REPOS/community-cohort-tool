@@ -434,7 +434,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    ) %>%
    select(GEOID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP)
 
- MEMO_MUNI <- COMPARE_MUNI %>% # includes previous (3yr)cohort assignment
+ MEMO_MUNI <- COMPARE_MUNI %>% # includes previous (3yr) cohort assignment
    mutate(
      COHORT_NAME = paste("Cohort", COHORT),
      PREV_COHORT_NAME = paste("Cohort", COHORT_PREV)
