@@ -477,6 +477,9 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
    write_csv("output/memo/Memo - Municipalities - Trending Down.csv")
 
+write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
+
+
  # CCAs (with current 1-year factors joined)
  MEMO_CCA_1YR <- FACTORS_CCA %>%
    mutate(
@@ -506,6 +509,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
      `Population in EDAs` = PCT_EDA_POP
    )
 
+
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
    MEMO_CCA %>%
      filter(`Cohort` == cohort_name) %>%
@@ -528,3 +532,6 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    rename(`Updated Cohort` = `Cohort`) %>%
    select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
    write_csv("output/memo/Memo - CCAs - Trending Down.csv")
+
+write.csv(MEMO_CCA, "output/memo/_CCAdata_2023.csv", row.names=FALSE)
+
