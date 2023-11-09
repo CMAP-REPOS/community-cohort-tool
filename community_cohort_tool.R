@@ -278,24 +278,24 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
 
 ############## PART 5: COMPARE CHANGE OF SCORES
 
-# Compare scores/cohorts against previous year ----------------------------
+# Compare scores/cohorts against previous assignment ----------------------------
 
  prev_year <- COHORT_YEAR - 1
 
  prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", prev_year - 2, "_", prev_year, ".csv")
  prev_cca_csv <- paste0("output/3yr/cohort_assignments_cca_3yr_", prev_year - 2, "_", prev_year, ".csv")
 
- PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT=col_character())) %>%
+ PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT_3YR=col_character())) %>%
    rename(
-     SCORE_PREV = WEIGHTED_SCORE,
-     COHORT_PREV = COHORT
+     SCORE_PREV = WEIGHTED_SCORE_3YR,
+     COHORT_PREV = COHORT_3YR
    ) %>%
    select(MUNI, SCORE_PREV, COHORT_PREV)
 
- PREV_SCORES_CCA <- read_csv(prev_cca_csv, col_types=cols(COHORT=col_character())) %>%
+ PREV_SCORES_CCA <- read_csv(prev_cca_csv, col_types=cols(COHORT_3YR=col_character())) %>%
    rename(
-     SCORE_PREV = WEIGHTED_SCORE,
-     COHORT_PREV = COHORT
+     SCORE_PREV = WEIGHTED_SCORE_3YR,
+     COHORT_PREV = COHORT_3YR
    ) %>%
    select(CCA_NAME, SCORE_PREV, COHORT_PREV)
 
@@ -324,98 +324,98 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
  cat("Linear trend: SCORE_new = ", lm_muni$coefficients[1], " + ", lm_muni$coefficients[2], "*SCORE_old", sep="")
  cat("Root-mean-square error (RMSE):", rmse(lm_muni, COMPARE_MUNI))
 
-# cat("CHICAGO COMMUNITY AREAS")
-# lm_cca <- lm(SCORE ~ SCORE_PREV, data=COMPARE_CCA)
-# cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE))
-# cat("Linear trend: SCORE_new = ", lm_cca$coefficients[1], " + ", lm_cca$coefficients[2], "*SCORE_old", sep="")
-# cat("Root-mean-square error (RMSE):", rmse(lm_cca, COMPARE_MUNI))
-#
-# # Plots
-# ggplot(COMPARE_MUNI) +
-#   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
-#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-#   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   labs(title="Updated vs. previous scores (municipalities)") +
-#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
-#              legend.position="right", legend.direction="vertical",
-#              legend.title=element_text()) +
-#   guides(color=guide_legend(title="Updated cohort"))
-#
-# ggplot(COMPARE_CCA) +
-#   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
-#   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
-#   geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
-#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-#   labs(title="Updated vs. previous scores (CCAs)") +
-#   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
-#              legend.position="right", legend.direction="vertical",
-#              legend.title=element_text()) +
-#   guides(color=guide_legend(title="Updated cohort"))
-#
-# ggplot(COMPARE_MUNI) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
-#   scale_size_area(max_size = 20) +
-#   labs(title="Updated vs. previous cohorts (municipalities)") +
-#   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
-#              legend.position="right", legend.direction="vertical") +
-#   guides(color=guide_none())
-#
-# ggplot(COMPARE_CCA) +
-#   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
-#   scale_size_area(max_size = 20) +
-#   labs(title="Updated vs. previous cohorts (CCAs)") +
-#   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
-#              legend.position="right", legend.direction="vertical") +
-#   guides(color=guide_none())
-#
-# ggplot(COMPARE_MUNI) +
-#   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
-#   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Updated vs. previous cohorts (municipalities)") +
-#   theme_cmap(xlab="Cohort", ylab="Number of municipalities")
-#
-# ggplot(COMPARE_CCA) +
-#   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
-#   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-#   labs(title="Updated vs. previous cohorts (CCAs)") +
-#   theme_cmap(xlab="Cohort", ylab="Number of CCAs")
-#
-# # Maps
-# muni_geo <- municipality_sf %>%
-#   mutate(GEOID_n = as.integer(geoid_place)) %>%
-#   left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
-#
-# cca_geo <- cca_sf %>%
-#   left_join(COMPARE_CCA, by=c("cca_num"="CCA_ID"))
-#
-# tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
-#               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-#               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
-# tm_shape(cnty_geo) +
-#   tm_borders(col="#888888", lwd=2) +
-# # tm_shape(muni_labels) +
-# #   tm_text("MUNI.x", size=0.7, col="#000000") +
-# tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
-#           fontface=get_cmapplot_global("font$strong$face"),
-#           fontfamily=get_cmapplot_global("font$strong$family"),
-#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
-#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
-#
-# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-#   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
-#               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-#               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
-# tm_legend(legend.position=c("left", "bottom")) +
-# tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
-#           fontface=get_cmapplot_global("font$strong$face"),
-#           fontfamily=get_cmapplot_global("font$strong$family"),
-#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
-#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+ cat("CHICAGO COMMUNITY AREAS")
+ lm_cca <- lm(SCORE ~ SCORE_PREV, data=COMPARE_CCA)
+ cat("Correlation (R-squared):", cor(COMPARE_MUNI$SCORE_PREV, COMPARE_MUNI$SCORE))
+ cat("Linear trend: SCORE_new = ", lm_cca$coefficients[1], " + ", lm_cca$coefficients[2], "*SCORE_old", sep="")
+ cat("Root-mean-square error (RMSE):", rmse(lm_cca, COMPARE_MUNI))
+
+ # Plots
+ ggplot(COMPARE_MUNI) +
+   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
+   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
+   geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
+   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+   labs(title="Updated vs. previous scores (municipalities)") +
+   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
+              legend.position="right", legend.direction="vertical",
+              legend.title=element_text()) +
+   guides(color=guide_legend(title="Updated cohort"))
+
+ ggplot(COMPARE_CCA) +
+   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
+   geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
+   geom_abline(intercept=lm_cca$coefficients[1], slope=lm_cca$coefficients[2]) +
+   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+   scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
+   labs(title="Updated vs. previous scores (CCAs)") +
+   theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
+              legend.position="right", legend.direction="vertical",
+              legend.title=element_text()) +
+   guides(color=guide_legend(title="Updated cohort"))
+
+ ggplot(COMPARE_MUNI) +
+   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
+   scale_size_area(max_size = 20) +
+   labs(title="Updated vs. previous cohorts (municipalities)") +
+   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
+              legend.position="right", legend.direction="vertical") +
+   guides(color=guide_none())
+
+ ggplot(COMPARE_CCA) +
+   geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
+   scale_size_area(max_size = 20) +
+   labs(title="Updated vs. previous cohorts (CCAs)") +
+   theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
+              legend.position="right", legend.direction="vertical") +
+   guides(color=guide_none())
+
+ ggplot(COMPARE_MUNI) +
+   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
+   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
+   labs(title="Updated vs. previous cohorts (municipalities)") +
+   theme_cmap(xlab="Cohort", ylab="Number of municipalities")
+
+ ggplot(COMPARE_CCA) +
+   geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
+   geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
+   labs(title="Updated vs. previous cohorts (CCAs)") +
+   theme_cmap(xlab="Cohort", ylab="Number of CCAs")
+
+# Maps
+ muni_geo <- municipality_sf %>%
+   mutate(GEOID_n = as.integer(geoid_place)) %>%
+   left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
+
+ cca_geo <- cca_sf %>%
+   left_join(COMPARE_CCA, by=c("cca_num"="CCA_ID"))
+
+ tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
+               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
+               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+ tm_shape(cnty_geo) +
+   tm_borders(col="#888888", lwd=2) +
+ # tm_shape(muni_labels) +
+ #   tm_text("MUNI.x", size=0.7, col="#000000") +
+ tm_legend(legend.position=c("left", "bottom")) +
+ tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
+           fontface=get_cmapplot_global("font$strong$face"),
+           fontfamily=get_cmapplot_global("font$strong$family"),
+           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+
+ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+   tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
+               midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
+               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+ tm_legend(legend.position=c("left", "bottom")) +
+ tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
+           fontface=get_cmapplot_global("font$strong$face"),
+           fontfamily=get_cmapplot_global("font$strong$family"),
+           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 
 
@@ -434,7 +434,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    ) %>%
    select(GEOID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP)
 
- MEMO_MUNI <- COMPARE_MUNI %>%
+ MEMO_MUNI <- COMPARE_MUNI %>% # includes previous (3yr)cohort assignment
    mutate(
      COHORT_NAME = paste("Cohort", COHORT),
      PREV_COHORT_NAME = paste("Cohort", COHORT_PREV)
