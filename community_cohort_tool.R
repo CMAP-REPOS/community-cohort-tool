@@ -417,11 +417,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
            legend.text.fontface=get_cmapplot_global("font$regular$face"),
            legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
-
-
-
 ############## PART 6: EXPORT TABLES FOR UPDATE MEMO
-
 
 # Tables for memo ---------------------------------------------------------
 
