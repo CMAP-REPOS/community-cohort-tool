@@ -112,7 +112,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   )
 }
 
-# Calculate overall score & 1-yr cohort ---------------------------------------
+# Calculate 1-yr score & 1-yr cohort ---------------------------------------
 
 FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
 FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
