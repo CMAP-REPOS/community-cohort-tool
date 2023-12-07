@@ -477,12 +477,15 @@ write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
 
 
  # CCAs (with current 1-year factors joined)
+
  MEMO_CCA_1YR <- FACTORS_CCA %>%
    mutate(
-     POP = exp(ln_POP),
      TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
      MED_HH_INC = exp(ln_MED_HH_INC)
    ) %>%
+   left_join(read_xlsx(IN_XLSX, sheet="FACTORS_CCA") %>% select(CCA_NAME, CCA_POP), by="CCA_NAME") %>%
+   rename(POP = CCA_POP) %>%
+   mutate(POP = round(POP,0)) %>%
    select(CCA_ID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP)
 
  MEMO_CCA <- COMPARE_CCA %>%
@@ -504,7 +507,6 @@ write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
      `Tax Base Per Capita` = TAX_BASE_PER_CAP,  # Using hybrid of citywide retail sales per cap + local EAV per cap for CCA tax base per cap
      `Population in EDAs` = PCT_EDA_POP
    )
-
 
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
    MEMO_CCA %>%
@@ -528,6 +530,8 @@ write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
    rename(`Updated Cohort` = `Cohort`) %>%
    select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
    write_csv("output/memo/Memo - CCAs - Trending Down.csv")
+
+ MEMO_CCA
 
 write.csv(MEMO_CCA, "output/memo/_CCAdata_2023.csv", row.names=FALSE)
 
