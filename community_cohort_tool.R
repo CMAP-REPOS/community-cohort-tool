@@ -444,10 +444,10 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
      `Previous Cohort` = PREV_COHORT_NAME,
      `Change in Cohort` = COHORT_CHG,
      `Overall Score` = SCORE,
-     `Median Income` = MED_HH_INC,
+     `Household Median Income` = MED_HH_INC,
      `Population` = POP,
      `Tax Base Per Capita` = TAX_BASE_PER_CAP,
-     `Population in EDAs` = PCT_EDA_POP
+     `Percent of Population in EDAs` = PCT_EDA_POP
    )
 
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
@@ -502,10 +502,10 @@ write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
      `Previous Cohort` = PREV_COHORT_NAME,
      `Change in Cohort` = COHORT_CHG,
      `Overall Score` = SCORE,
-     `Median Income` = MED_HH_INC,
+     `Household Median Income` = MED_HH_INC,
      `Population` = POP,  # Using Chicago's population for each CCA to avoid cohort inflation
      `Tax Base Per Capita` = TAX_BASE_PER_CAP,  # Using hybrid of citywide retail sales per cap + local EAV per cap for CCA tax base per cap
-     `Population in EDAs` = PCT_EDA_POP
+     `Percent of Population in EDAs` = PCT_EDA_POP
    )
 
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
