@@ -263,6 +263,84 @@ tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
           legend.text.fontface=get_cmapplot_global("font$regular$face"),
           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
+# Plot distribution of cohorts (3 yr average) ---------------------------------------
+
+bin_width = 100 / (max_wt_score - min_wt_score)
+bin_center = bin_width / 2
+
+ggplot(MUNI_SCORES_3YR_AVG) +
+  geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
+                 binwidth = bin_width, center=bin_center) +
+  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
+  labs(title="Distribution of overall scores (municipalities) FY2023") +
+  theme_cmap(hline=0, ylab="Number of municipalities") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+
+chi_overall <- MUNI_SCORES_3YR_AVG[MUNI_SCORES_3YR_AVG$MUNI=="Chicago", "WEIGHTED_SCORE_3YR"][[1]]
+ggplot(CCA_SCORES_3YR_AVG) +
+  geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
+                 binwidth=bin_width, center=bin_center) +
+  geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
+  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+  labs(#title="Distribution of overall scores (CCAs) FY2023",
+       caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
+  theme_cmap(hline=0, ylab="Number of CCAs") +
+  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+                    breaks=c("1", "2", "3", "4"),
+                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+
+
+# Map distribution of cohorts (3 yr averaged scores) ---------------------------------------------------------
+
+tmap_mode("plot")  # "plot" (static) or "view" (interactive)
+cnty_geo <- filter(county_sf, cmap)
+chi_geo <- municipality_sf %>% filter(municipality == "Chicago")
+
+# munis
+
+muni_geo <- municipality_sf %>%
+  mutate(GEOID_n = as.integer(geoid_place)) %>%
+  left_join(MUNI_SCORES_3YR_AVG, by=c("GEOID_n"="GEOID")) %>%
+  mutate(COHORT_n = as.integer(COHORT_3YR))
+
+# muni_labels <- muni_geo %>%
+#   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+
+ tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+               palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+   tm_shape(cnty_geo) +
+   tm_borders(col="#888888", lwd=2) +
+   # tm_shape(muni_labels) +
+   #   tm_text("MUNI", size=0.7, col="#000000") +
+   tm_legend(legend.position=c("left", "bottom")) +
+   tm_layout(title="Assigned cohorts (municipalities) FY2023", frame=FALSE,
+             fontface=get_cmapplot_global("font$strong$face"),
+             fontfamily=get_cmapplot_global("font$strong$family"),
+             legend.text.fontface=get_cmapplot_global("font$regular$face"),
+             legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+
+# ccas
+
+cca_geo <- cca_sf %>%
+  left_join(CCA_SCORES_3YR_AVG, by=c("cca_num"="CCA_ID")) %>%
+  mutate(COHORT_n = as.integer(COHORT_3YR))
+
+tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+  tm_legend(legend.position=c("left", "bottom")) +
+  tm_layout(title="Assigned cohorts (CCAs) FY2023", frame=FALSE,
+            fontface=get_cmapplot_global("font$strong$face"),
+            fontfamily=get_cmapplot_global("font$strong$family"),
+            legend.text.fontface=get_cmapplot_global("font$regular$face"),
+            legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+
+
 ############## PART 4: EXPORT SCORES
 
 # Write output files (1-year version) -------------------------------------
@@ -332,12 +410,12 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
 
  # Plots
  ggplot(COMPARE_MUNI) +
-   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
+   geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=2) +
    geom_abline(intercept=0, slope=1, color="gray", linetype="dashed") +
    geom_abline(intercept=lm_muni$coefficients[1], slope=lm_muni$coefficients[2]) +
    scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
    scale_y_continuous(limits=c(0, 100), breaks=seq(0, 100, 20)) +
-   labs(title="Updated vs. previous scores (municipalities)") +
+   #labs(title="Updated vs. previous scores (municipalities)") +
    theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
               legend.position="right", legend.direction="vertical",
               legend.title=element_text()) +
@@ -374,7 +452,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
  ggplot(COMPARE_MUNI) +
    geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
    geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-   labs(title="Updated vs. previous cohorts (municipalities)") +
+   #labs(title="Updated vs. previous cohorts (municipalities)") +
    theme_cmap(xlab="Cohort", ylab="Number of municipalities")
 
  ggplot(COMPARE_CCA) +
@@ -400,7 +478,8 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
  # tm_shape(muni_labels) +
  #   tm_text("MUNI.x", size=0.7, col="#000000") +
  tm_legend(legend.position=c("left", "bottom")) +
- tm_layout(title="Change in municipality cohort (previous to updated)", frame=FALSE,
+ tm_layout(#title="Change in municipality cohort (previous to updated)",
+   frame=FALSE,
            fontface=get_cmapplot_global("font$strong$face"),
            fontfamily=get_cmapplot_global("font$strong$family"),
            legend.text.fontface=get_cmapplot_global("font$regular$face"),
@@ -410,8 +489,11 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
                midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
                labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+ tm_shape(chi_geo) +
+   tm_borders(col="#888888", lwd=2) +
  tm_legend(legend.position=c("left", "bottom")) +
- tm_layout(title="Change in CCA cohort (previous to updated)", frame=FALSE,
+ tm_layout(#title="Change in CCA cohort (previous to updated)",
+          frame=FALSE,
            fontface=get_cmapplot_global("font$strong$face"),
            fontfamily=get_cmapplot_global("font$strong$family"),
            legend.text.fontface=get_cmapplot_global("font$regular$face"),
