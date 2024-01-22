@@ -271,12 +271,12 @@ bin_center = bin_width / 2
 ggplot(MUNI_SCORES_3YR_AVG) +
   geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
                  binwidth = bin_width, center=bin_center) +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
+  #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
   labs(title="Distribution of overall scores (municipalities) FY2023") +
   theme_cmap(hline=0, ylab="Number of municipalities") +
-  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
-                    breaks=c("1", "2", "3", "4"),
-                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+  scale_fill_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+                    breaks=c("4","3", "2","1"),
+                    labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
 chi_overall <- MUNI_SCORES_3YR_AVG[MUNI_SCORES_3YR_AVG$MUNI=="Chicago", "WEIGHTED_SCORE_3YR"][[1]]
 ggplot(CCA_SCORES_3YR_AVG) +
@@ -287,9 +287,9 @@ ggplot(CCA_SCORES_3YR_AVG) +
   labs(#title="Distribution of overall scores (CCAs) FY2023",
        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
   theme_cmap(hline=0, ylab="Number of CCAs") +
-  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
-                    breaks=c("1", "2", "3", "4"),
-                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+  scale_fill_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+                    breaks=c("4","3", "2","1"),
+                    labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
 
 # Map distribution of cohorts (3 yr averaged scores) ---------------------------------------------------------
@@ -310,7 +310,7 @@ muni_geo <- municipality_sf %>%
 
  tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
    tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-               palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+               palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
                labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
    tm_shape(cnty_geo) +
    tm_borders(col="#888888", lwd=2) +
@@ -331,7 +331,7 @@ cca_geo <- cca_sf %>%
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+              palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
   tm_legend(legend.position=c("left", "bottom")) +
   tm_layout(title="Assigned cohorts (CCAs) FY2023", frame=FALSE,
@@ -419,7 +419,11 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    theme_cmap(gridlines="hv", xlab="Previous score", ylab="Updated score",
               legend.position="right", legend.direction="vertical",
               legend.title=element_text()) +
-   guides(color=guide_legend(title="Updated cohort"))
+   guides(color=guide_legend(title="Updated cohort")) +
+   scale_color_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+                     breaks=c("1","2","3","4"),
+                     labels=c("1","2","3","4"))
+
 
  ggplot(COMPARE_CCA) +
    geom_point(aes(x=SCORE_PREV, y=SCORE, color=COHORT), alpha=0.6, size=3) +
@@ -439,7 +443,10 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    labs(title="Updated vs. previous cohorts (municipalities)") +
    theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
               legend.position="right", legend.direction="vertical") +
-   guides(color=guide_none())
+   guides(color=guide_none())  +
+   scale_color_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+                      breaks=c("1","2","3","4"),
+                      labels=c("1","2","3","4"))
 
  ggplot(COMPARE_CCA) +
    geom_count(aes(x=COHORT_PREV, y=COHORT, color=COHORT)) +
