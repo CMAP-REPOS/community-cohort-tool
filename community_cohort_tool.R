@@ -274,7 +274,7 @@ ggplot(MUNI_SCORES_3YR_AVG) +
   #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
   labs(title="Distribution of overall scores (municipalities) FY2023") +
   theme_cmap(hline=0, ylab="Number of municipalities") +
-  scale_fill_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
                     breaks=c("4","3", "2","1"),
                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
@@ -287,7 +287,7 @@ ggplot(CCA_SCORES_3YR_AVG) +
   labs(#title="Distribution of overall scores (CCAs) FY2023",
        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
   theme_cmap(hline=0, ylab="Number of CCAs") +
-  scale_fill_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
                     breaks=c("4","3", "2","1"),
                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
@@ -420,7 +420,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
               legend.position="right", legend.direction="vertical",
               legend.title=element_text()) +
    guides(color=guide_legend(title="Updated cohort")) +
-   scale_color_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
                      breaks=c("1","2","3","4"),
                      labels=c("1","2","3","4"))
 
@@ -444,7 +444,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
               legend.position="right", legend.direction="vertical") +
    guides(color=guide_none())  +
-   scale_color_manual(values=c(`4`="#B4D79E", `3`="#89CD66", `2`="#C29ED7", `1`="#AA66CD"),
+   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
                       breaks=c("1","2","3","4"),
                       labels=c("1","2","3","4"))
 
