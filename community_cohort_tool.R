@@ -317,7 +317,7 @@ muni_geo <- municipality_sf %>%
    # tm_shape(muni_labels) +
    #   tm_text("MUNI", size=0.7, col="#000000") +
    tm_legend(legend.position=c("left", "bottom")) +
-   tm_layout(title="Assigned cohorts (municipalities) FY2023", frame=FALSE,
+   tm_layout(title= paste("Assigned cohorts (municipalities) FY", COHORT_YEAR, sep=""), frame=FALSE,
              fontface=get_cmapplot_global("font$strong$face"),
              fontfamily=get_cmapplot_global("font$strong$family"),
              legend.text.fontface=get_cmapplot_global("font$regular$face"),
@@ -496,7 +496,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
     tm_text("MUNI", size=0.7, col="#000000") +
  tm_legend(legend.position=c("left", "bottom")) +
  tm_layout(#title="Change in municipality cohort (previous to updated)",
-   frame=FALSE,
+           frame=FALSE,
            fontface=get_cmapplot_global("font$strong$face"),
            fontfamily=get_cmapplot_global("font$strong$family"),
            legend.text.fontface=get_cmapplot_global("font$regular$face"),
