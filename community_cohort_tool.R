@@ -13,7 +13,7 @@ library(cmapplot)
 library(cmapgeo)
 apply_cmap_default_aes()
 
-COHORT_YEAR <- 2023  # Update this each year!
+COHORT_YEAR <- 2024  # Update this each year!
 IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
 
 
@@ -334,7 +334,7 @@ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
               palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
   tm_legend(legend.position=c("left", "bottom")) +
-  tm_layout(title="Assigned cohorts (CCAs) FY2023", frame=FALSE,
+  tm_layout(title=paste0("Assigned cohorts (CCAs) FY", COHORT_YEAR, sep=""), frame=FALSE,
             fontface=get_cmapplot_global("font$strong$face"),
             fontfamily=get_cmapplot_global("font$strong$family"),
             legend.text.fontface=get_cmapplot_global("font$regular$face"),
