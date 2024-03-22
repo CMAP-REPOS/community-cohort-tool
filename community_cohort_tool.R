@@ -1,7 +1,7 @@
 ############## PART 1: SETUP AND IMPORT
 
 #install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
-#devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
+devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
 #devtools::install_github("CMAP-REPOS/cmapgeo", build_vignettes = TRUE)
 library(tidyverse)
 library(readxl)
@@ -473,8 +473,18 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    mutate(GEOID_n = as.integer(geoid_place)) %>%
    left_join(COMPARE_MUNI, by=c("GEOID_n"="GEOID"))
 
+  muni_labels <- muni_geo %>%
+    filter(MUNI %in% CHANGED_MUNIS$MUNI)
+
+# muni_labels <- muni_geo %>%
+#   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))
+
  cca_geo <- cca_sf %>%
    left_join(COMPARE_CCA, by=c("cca_num"="CCA_ID"))
+
+ cca_labels <- cca_geo %>%
+   filter(cca_name %in% CHANGED_CCAS$CCA_NAME)
+
 
  tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
    tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
@@ -482,8 +492,8 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
                labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
  tm_shape(cnty_geo) +
    tm_borders(col="#888888", lwd=2) +
- # tm_shape(muni_labels) +
- #   tm_text("MUNI.x", size=0.7, col="#000000") +
+ tm_shape(muni_labels) +
+    tm_text("MUNI", size=0.7, col="#000000") +
  tm_legend(legend.position=c("left", "bottom")) +
  tm_layout(#title="Change in municipality cohort (previous to updated)",
    frame=FALSE,
@@ -498,6 +508,8 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
                labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
  tm_shape(chi_geo) +
    tm_borders(col="#888888", lwd=2) +
+ tm_shape(cca_labels) +
+   tm_text("cca_name", size=0.7, col="#000000") +
  tm_legend(legend.position=c("left", "bottom")) +
  tm_layout(#title="Change in CCA cohort (previous to updated)",
           frame=FALSE,
@@ -562,7 +574,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
    write_csv("output/memo/Memo - Municipalities - Trending Down.csv")
 
-write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
+write.csv(MEMO_MUNI, paste("output/memo/_Munidata_", COHORT_YEAR, ".csv",sep=""), row.names=FALSE)
 
 
  # CCAs (with current 1-year factors joined)
@@ -620,7 +632,5 @@ write.csv(MEMO_MUNI, "output/memo/_Munidata_2023.csv", row.names=FALSE)
    select(`Community Name`, `Previous Cohort`, `Updated Cohort`) %>%
    write_csv("output/memo/Memo - CCAs - Trending Down.csv")
 
- MEMO_CCA
-
-write.csv(MEMO_CCA, "output/memo/_CCAdata_2023.csv", row.names=FALSE)
+write.csv(MEMO_CCA, paste("output/memo/_CCAdata_", COHORT_YEAR, ".csv", sep=""), row.names=FALSE)
 
