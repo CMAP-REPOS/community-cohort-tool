@@ -1,7 +1,7 @@
 ############## PART 1: SETUP AND IMPORT
 
 #install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
-devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
+#devtools::install_github("CMAP-REPOS/cmapplot", build_vignettes = TRUE)
 #devtools::install_github("CMAP-REPOS/cmapgeo", build_vignettes = TRUE)
 library(tidyverse)
 library(readxl)
@@ -198,7 +198,7 @@ ggplot(FACTORS_MUNI) +
   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
                  binwidth=bin_width, center=bin_center) +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(title="Distribution of overall scores (municipalities)") +
+  labs(title="Distribution of one year scores (municipalities)") +
   theme_cmap(hline=0, ylab="Number of municipalities") +
   scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
                     breaks=c("1", "2", "3", "4"),
@@ -212,7 +212,7 @@ ggplot(FACTORS_CCA) +
                  binwidth=bin_width, center=bin_center) +
   geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(title="Distribution of overall scores (CCAs)",
+  labs(title="Distribution of one year scores (CCAs)",
        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
   theme_cmap(hline=0, ylab="Number of CCAs") +
   scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
@@ -246,7 +246,7 @@ tm_shape(cnty_geo) +
 # tm_shape(muni_labels) +
 #   tm_text("MUNI", size=0.7, col="#000000") +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (municipalities)", frame=FALSE,
+tm_layout(title="Assigned 1-year cohorts (municipalities)", frame=FALSE,
           fontface=get_cmapplot_global("font$strong$face"),
           fontfamily=get_cmapplot_global("font$strong$family"),
           legend.text.fontface=get_cmapplot_global("font$regular$face"),
@@ -257,7 +257,7 @@ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
               palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
 tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned cohorts (CCAs)", frame=FALSE,
+tm_layout(title="Assigned 1-year cohorts (CCAs)", frame=FALSE,
           fontface=get_cmapplot_global("font$strong$face"),
           fontfamily=get_cmapplot_global("font$strong$family"),
           legend.text.fontface=get_cmapplot_global("font$regular$face"),
@@ -272,7 +272,7 @@ ggplot(MUNI_SCORES_3YR_AVG) +
   geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
                  binwidth = bin_width, center=bin_center) +
   #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
-  labs(title="Distribution of overall scores (municipalities) FY2023") +
+  labs(title = paste("Distribution of overall scores (municipalities) FY", COHORT_YEAR, sep="")) +
   theme_cmap(hline=0, ylab="Number of municipalities") +
   scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
                     breaks=c("4","3", "2","1"),
@@ -284,7 +284,7 @@ ggplot(CCA_SCORES_3YR_AVG) +
                  binwidth=bin_width, center=bin_center) +
   geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(#title="Distribution of overall scores (CCAs) FY2023",
+  labs(title=paste("Distribution of overall scores (CCAs) FY", COHORT_YEAR, sep=""),
        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
   theme_cmap(hline=0, ylab="Number of CCAs") +
   scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
