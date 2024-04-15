@@ -486,14 +486,14 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    filter(cca_name %in% CHANGED_CCAS$CCA_NAME)
 
 
- tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+ tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.4)) +
    tm_polygons("COHORT_CHG", title="", palette="-PuOr", contrast=c(0,1), n=7, border.col="#ffffff", lwd=0.5,
                midpoint=NA, style="fixed", breaks=c(-3,-2,-1,0,1,2,3,4),
-               labels=c("-3 (lower need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (higher need)")) +
+               labels=c("-3 (low need)", "-2", "-1", "+0 (no change)", "+1", "+2", "+3 (high need)")) +
  tm_shape(cnty_geo) +
    tm_borders(col="#888888", lwd=2) +
  tm_shape(muni_labels) +
-    tm_text("MUNI", size=0.7, col="#000000") +
+    tm_text("MUNI", size=0.7, col="#000000", auto.placement = 1) +
  tm_legend(legend.position=c("left", "bottom")) +
  tm_layout(#title="Change in municipality cohort (previous to updated)",
            frame=FALSE,
