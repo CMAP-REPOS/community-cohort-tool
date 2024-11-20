@@ -19,14 +19,13 @@ input_23 <- "input/community_cohort_inputs_2023.xlsx"
 input_22 <- "input/community_cohort_inputs_2022.xlsx"
 
 
-# Load input factors, weights and cohort thresholds -----------------------
+# Load input factors, weights and cohort thresholds for 2024 -----------------------
 
 FACTORS_MUNI <- read_xlsx(IN_XLSX, sheet="FACTORS_MUNI")
 FACTORS_CCA <- read_xlsx(IN_XLSX, sheet="FACTORS_CCA")
 WEIGHTS <- read_xlsx(IN_XLSX, sheet="WEIGHTS")
 COHORTS <- read_xlsx(IN_XLSX, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
-
 
 # Calculate factor-specific scoring thresholds ----------------------------
 
@@ -83,32 +82,32 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   FACTORS_MUNI[, wt_score_col] <- FACTORS_MUNI[, score_col] * abs(weight)
   FACTORS_CCA[, wt_score_col] <- FACTORS_CCA[, score_col] * abs(weight)
 
-  # Inspect score distribution
-  print(
-    ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(factor)), color="#222222", fill="#73c9e3", size=0.3, bins=50) +
-      geom_vline(xintercept=cuts[[2]], color="#222222", linetype="dotted") +
-      geom_vline(xintercept=cuts[[3]], color="#222222", linetype="dotdash") +
-      geom_vline(xintercept=cuts[[4]], color="#222222", linetype="dashed") +
-      geom_vline(xintercept=cuts[[5]], color="#222222", linetype="longdash") +
-      geom_vline(xintercept=cuts[[6]], color="#222222", linetype="solid", size=1) +  # Median
-      geom_vline(xintercept=cuts[[7]], color="#222222", linetype="longdash") +
-      geom_vline(xintercept=cuts[[8]], color="#222222", linetype="dashed") +
-      geom_vline(xintercept=cuts[[9]], color="#222222", linetype="dotdash") +
-      geom_vline(xintercept=cuts[[10]], color="#222222", linetype="dotted") +
-      labs(title=paste("Distribution of factor values (with group breaks)", factor, sep="\n")) +
-      theme_cmap(hline=0, ylab="Number of municipalities")
-  )
-
-  print(
-    ggplot(FACTORS_MUNI) +
-      geom_histogram(aes(x=get(score_col)), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
-      geom_hline(yintercept=28.4, color="#222222", size=0.5, linetype="dashed") +
-      scale_x_continuous(limits=c(min(groups)-0.5, max(groups)+0.5), breaks=groups) +
-      labs(title = paste("Distribution of factor scores", score_col, sep="\n"),
-           caption="Note: Dashed line represents a perfect decile distribution of 28.4 municipalities per group.") +
-      theme_cmap(hline=0, ylab="Number of municipalities")
-  )
+  # # Inspect score distribution
+  # print(
+  #   ggplot(FACTORS_MUNI) +
+  #     geom_histogram(aes(x=get(factor)), color="#222222", fill="#73c9e3", size=0.3, bins=50) +
+  #     geom_vline(xintercept=cuts[[2]], color="#222222", linetype="dotted") +
+  #     geom_vline(xintercept=cuts[[3]], color="#222222", linetype="dotdash") +
+  #     geom_vline(xintercept=cuts[[4]], color="#222222", linetype="dashed") +
+  #     geom_vline(xintercept=cuts[[5]], color="#222222", linetype="longdash") +
+  #     geom_vline(xintercept=cuts[[6]], color="#222222", linetype="solid", size=1) +  # Median
+  #     geom_vline(xintercept=cuts[[7]], color="#222222", linetype="longdash") +
+  #     geom_vline(xintercept=cuts[[8]], color="#222222", linetype="dashed") +
+  #     geom_vline(xintercept=cuts[[9]], color="#222222", linetype="dotdash") +
+  #     geom_vline(xintercept=cuts[[10]], color="#222222", linetype="dotted") +
+  #     labs(title=paste("Distribution of factor values (with group breaks)", factor, sep="\n")) +
+  #     theme_cmap(hline=0, ylab="Number of municipalities")
+  # )
+  #
+  # print(
+  #   ggplot(FACTORS_MUNI) +
+  #     geom_histogram(aes(x=get(score_col)), color="#222222", fill="#73c9e3", size=0.3, binwidth=1) +
+  #     geom_hline(yintercept=28.4, color="#222222", size=0.5, linetype="dashed") +
+  #     scale_x_continuous(limits=c(min(groups)-0.5, max(groups)+0.5), breaks=groups) +
+  #     labs(title = paste("Distribution of factor scores", score_col, sep="\n"),
+  #          caption="Note: Dashed line represents a perfect decile distribution of 28.4 municipalities per group.") +
+  #     theme_cmap(hline=0, ylab="Number of municipalities")
+  #)
 }
 
 # Calculate 1-yr score & 1-yr cohort ---------------------------------------
@@ -132,7 +131,59 @@ FACTORS_CCA$COHORT <- cut(as.vector(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, C
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
+# repeat process for 2023
+
+input_23 <- "input/community_cohort_inputs_2023.xlsx"
+
+FACTORS_MUNI_23 <- read_xlsx(input_23, sheet="FACTORS_MUNI")
+FACTORS_CCA_23 <- read_xlsx(input_23, sheet="FACTORS_CCA")
+
+WEIGHTS <- read_xlsx(input_23, sheet="WEIGHTS")
+
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI_23[, WEIGHTS$FACTOR_NAME], median)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI_23[, WEIGHTS$FACTOR_NAME], sd)[1,])
+
+WEIGHTS <- WEIGHTS %>%
+  mutate(
+    CUT0 = -Inf,
+    CUT1 = MED - SD * 1.2816,  # ~10th %ile (based on standard normal distribution)
+    CUT2 = MED - SD * 0.8416,  # ~20th %ile
+    CUT3 = MED - SD * 0.5244,  # ~30th %ile
+    CUT4 = MED - SD * 0.2533,  # ~40th %ile
+    CUT5 = MED,                # ~50th %ile
+    CUT6 = MED + SD * 0.2533,  # ~60th %ile
+    CUT7 = MED + SD * 0.5244,  # ~70th %ile
+    CUT8 = MED + SD * 0.8416,  # ~80th %ile
+    CUT9 = MED + SD * 1.2816,  # ~90th %ile
+    CUT10 = Inf
+  )
+
+keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
+keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
+FACTORS_MUNI_23 <- FACTORS_MUNI[, keep_cols_muni]
+FACTORS_CCA_23 <- FACTORS_CCA[, keep_cols_cca]
+
+score_cols <- c()
+wt_score_cols <- c()
+
+
+
+
+
+
+
 # Calculate 3-year average scores and reassign cohorts --------------------
+
+
+
+
+
+
+
+
+
+
+
 
 # Munis
 
