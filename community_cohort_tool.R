@@ -427,13 +427,13 @@ CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
 
 # Write output files (1-year version) -------------------------------------
 
-write_csv(MUNI_CURRENTYR, paste0("output/1yr/cohort_assignments_muni_1yr_", COHORT_YEAR, ".csv"))
+write_csv(MUNI_CURRENTYR, paste0("output/1yr/cohort_assignments_muni_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
 
-write_csv(MUNI_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_muni_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
+write_csv(MUNI_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_muni_noPCTEDAPOP_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
 
-write_csv(CCA_CURRENTYR, paste0("output/1yr/cohort_assignments_cca_1yr_", COHORT_YEAR, ".csv"))
+write_csv(CCA_CURRENTYR, paste0("output/1yr/cohort_assignments_cca_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
 
-write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
+write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_noPCTEDAPOP_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
 
 
 ############## PART 5: COMPARE CHANGE OF SCORES
