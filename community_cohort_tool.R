@@ -348,32 +348,31 @@ CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
 
 # Plot distribution of cohorts (3 yr average) ---------------------------------------
 
-bin_width = 100 / (max_wt_score - min_wt_score)
-bin_center = bin_width / 2
-
-ggplot(MUNI_SCORES_3YR_AVG) +
-  geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
-                 binwidth = bin_width, center=bin_center) +
-  #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
-  labs(title = paste("Distribution of overall scores (municipalities) FY", COHORT_YEAR, sep="")) +
-  theme_cmap(hline=0, ylab="Number of municipalities") +
-  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
-                    breaks=c("4","3", "2","1"),
-                    labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
-
-chi_overall <- MUNI_SCORES_3YR_AVG[MUNI_SCORES_3YR_AVG$MUNI=="Chicago", "WEIGHTED_SCORE_3YR"][[1]]
-ggplot(CCA_SCORES_3YR_AVG) +
-  geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
-                 binwidth=bin_width, center=bin_center) +
-  geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(title=paste("Distribution of overall scores (CCAs) FY", COHORT_YEAR, sep=""),
-       caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
-  theme_cmap(hline=0, ylab="Number of CCAs") +
-  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
-                    breaks=c("4","3", "2","1"),
-                    labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
-
+# bin_width = 100 / (max_wt_score - min_wt_score)
+# bin_center = bin_width / 2
+#
+# ggplot(MUNI_SCORES_3YR_AVG) +
+#   geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
+#                  binwidth = bin_width, center=bin_center) +
+#   #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
+#   labs(title = paste("Distribution of overall scores (municipalities) FY", COHORT_YEAR, sep="")) +
+#   theme_cmap(hline=0, ylab="Number of municipalities") +
+#   scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+#                     breaks=c("4","3", "2","1"),
+#                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
+#
+# chi_overall <- MUNI_SCORES_3YR_AVG[MUNI_SCORES_3YR_AVG$MUNI=="Chicago", "WEIGHTED_SCORE_3YR"][[1]]
+# ggplot(CCA_SCORES_3YR_AVG) +
+#   geom_histogram(aes(x=WEIGHTED_SCORE_3YR, fill=COHORT_3YR), color="#222222", size=0.3,
+#                  binwidth=bin_width, center=bin_center) +
+#   geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   labs(title=paste("Distribution of overall scores (CCAs) FY", COHORT_YEAR, sep=""),
+#        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
+#   theme_cmap(hline=0, ylab="Number of CCAs") +
+#   scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+#                     breaks=c("4","3", "2","1"),
+#                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
 # Map distribution of cohorts (3 yr averaged scores) ---------------------------------------------------------
 
