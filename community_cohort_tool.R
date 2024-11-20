@@ -14,9 +14,10 @@ library(cmapgeo)
 apply_cmap_default_aes()
 
 COHORT_YEAR <- 2024  # Update this each year!
-IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+IN_XLSX <- "input/community_cohort_inputs_2024.xlsx"  # Spreadsheet containing latest data
+input_23 <- "input/community_cohort_inputs_2023.xlsx"
+input_22 <- "input/community_cohort_inputs_2022.xlsx"
 
-# this is a test change!
 
 # Load input factors, weights and cohort thresholds -----------------------
 
