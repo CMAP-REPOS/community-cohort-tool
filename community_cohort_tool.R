@@ -376,51 +376,51 @@ CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
 
 # Map distribution of cohorts (3 yr averaged scores) ---------------------------------------------------------
 
-tmap_mode("plot")  # "plot" (static) or "view" (interactive)
-cnty_geo <- filter(county_sf, cmap)
-chi_geo <- municipality_sf %>% filter(municipality == "Chicago")
-
-# munis
-
-muni_geo <- municipality_sf %>%
-  mutate(GEOID_n = as.integer(geoid_place)) %>%
-  left_join(MUNI_SCORES_3YR_AVG, by=c("GEOID_n"="GEOID")) %>%
-  mutate(COHORT_n = as.integer(COHORT_3YR))
-
-# muni_labels <- muni_geo %>%
-#   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
-
- tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-               palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
-               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-   tm_shape(cnty_geo) +
-   tm_borders(col="#888888", lwd=2) +
-   # tm_shape(muni_labels) +
-   #   tm_text("MUNI", size=0.7, col="#000000") +
-   tm_legend(legend.position=c("left", "bottom")) +
-   tm_layout(title= paste("Assigned cohorts (municipalities) FY", COHORT_YEAR, sep=""), frame=FALSE,
-             fontface=get_cmapplot_global("font$strong$face"),
-             fontfamily=get_cmapplot_global("font$strong$family"),
-             legend.text.fontface=get_cmapplot_global("font$regular$face"),
-             legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
-
-# ccas
-
-cca_geo <- cca_sf %>%
-  left_join(CCA_SCORES_3YR_AVG, by=c("cca_num"="CCA_ID")) %>%
-  mutate(COHORT_n = as.integer(COHORT_3YR))
-
-tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-              palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-  tm_legend(legend.position=c("left", "bottom")) +
-  tm_layout(title=paste0("Assigned cohorts (CCAs) FY", COHORT_YEAR, sep=""), frame=FALSE,
-            fontface=get_cmapplot_global("font$strong$face"),
-            fontfamily=get_cmapplot_global("font$strong$family"),
-            legend.text.fontface=get_cmapplot_global("font$regular$face"),
-            legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+# tmap_mode("plot")  # "plot" (static) or "view" (interactive)
+# cnty_geo <- filter(county_sf, cmap)
+# chi_geo <- municipality_sf %>% filter(municipality == "Chicago")
+#
+# # munis
+#
+# muni_geo <- municipality_sf %>%
+#   mutate(GEOID_n = as.integer(geoid_place)) %>%
+#   left_join(MUNI_SCORES_3YR_AVG, by=c("GEOID_n"="GEOID")) %>%
+#   mutate(COHORT_n = as.integer(COHORT_3YR))
+#
+# # muni_labels <- muni_geo %>%
+# #   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+#
+#  tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+#    tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+#                palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
+#                labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+#    tm_shape(cnty_geo) +
+#    tm_borders(col="#888888", lwd=2) +
+#    # tm_shape(muni_labels) +
+#    #   tm_text("MUNI", size=0.7, col="#000000") +
+#    tm_legend(legend.position=c("left", "bottom")) +
+#    tm_layout(title= paste("Assigned cohorts (municipalities) FY", COHORT_YEAR, sep=""), frame=FALSE,
+#              fontface=get_cmapplot_global("font$strong$face"),
+#              fontfamily=get_cmapplot_global("font$strong$family"),
+#              legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#              legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+#
+# # ccas
+#
+# cca_geo <- cca_sf %>%
+#   left_join(CCA_SCORES_3YR_AVG, by=c("cca_num"="CCA_ID")) %>%
+#   mutate(COHORT_n = as.integer(COHORT_3YR))
+#
+# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+#   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+#               palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
+#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+#   tm_legend(legend.position=c("left", "bottom")) +
+#   tm_layout(title=paste0("Assigned cohorts (CCAs) FY", COHORT_YEAR, sep=""), frame=FALSE,
+#             fontface=get_cmapplot_global("font$strong$face"),
+#             fontfamily=get_cmapplot_global("font$strong$family"),
+#             legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#             legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 
 ############## PART 4: EXPORT SCORES
