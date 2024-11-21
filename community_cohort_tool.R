@@ -316,7 +316,25 @@ MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
   mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>% # score averaging happens HERE
   select(-starts_with("SCORE_YEAR"))
 
-MUNI_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(MUNI_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+# calculate new cohort cuts (maintain the same # of communities in each cohort)
+# { start
+prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv")
+PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT_3YR=col_character())) %>%
+  rename(
+    SCORE_PREV = WEIGHTED_SCORE_3YR,
+    COHORT_PREV = COHORT_3YR
+  ) %>%
+  select(MUNI, SCORE_PREV, COHORT_PREV)
+
+PREV_COHORT_SHARE <- PREV_SCORES_MUNI %>% group_by(COHORT_PREV) %>% summarize(cnt = n()) %>%
+  mutate(freq = round(cnt/sum(cnt), 3))
+
+NEW_COHORTCUTS <- tibble(c("4", "3", "2", "1"),
+                         c(26, 38, 55, 100)) # derived from manual inspection of MUNI_SCORES_3YR_AVG
+names(NEW_COHORTCUTS) <- c("COHORT", "MAX_SCORE")
+# } end
+
+MUNI_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(MUNI_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, NEW_COHORTCUTS$MAX_SCORE), NEW_COHORTCUTS$COHORT)
 MUNI_SCORES_3YR_AVG <- MUNI_SCORES_3YR_AVG %>%
   mutate(COHORT_3YR = fct_relevel(COHORT_3YR, sort))
 
