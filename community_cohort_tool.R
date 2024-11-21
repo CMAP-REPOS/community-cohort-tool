@@ -438,12 +438,10 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_noPCTEDA
 
 ############## PART 5: COMPARE CHANGE OF SCORES
 
-# Compare scores/cohorts against previous assignment ----------------------------
+# Compare scores/cohorts against previous version ----------------------------
 
- prev_year <- COHORT_YEAR - 1
-
- prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", prev_year - 2, "_", prev_year, ".csv")
- prev_cca_csv <- paste0("output/3yr/cohort_assignments_cca_3yr_", prev_year - 2, "_", prev_year, ".csv")
+ prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv")
+ prev_cca_csv <- paste0("output/3yr/cohort_assignments_cca_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv")
 
  PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT_3YR=col_character())) %>%
    rename(
