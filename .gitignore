@@ -7,3 +7,7 @@ packrat/lib*/
 output/memo/
 output/archive/*
 input/archive/*
+output/3yr/remove_PCTEDAPOP/muni_change_map.PNG
+/output/3yr/remove_PCTEDAPOP
+output/3yr/cohort_assignments_muni_noPCTEDAPOP_3yr_2022_2024.csv
+output/3yr/cohort_assignments_cca_noPCTEDAPOP_3yr_2022_2024.csv
