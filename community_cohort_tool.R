@@ -1,3 +1,16 @@
+#################
+#
+# The purpose of this branch is to test how the 2024 cohort assignments
+# may change if the "% Population in EDA or DA" factor is replaced with
+# "% Population in DA only" for both munis and ccas
+#
+#
+# November 2024 | amcadams
+#
+#
+#################
+
+
 ############## PART 1: SETUP AND IMPORT
 
 #install.packages("tidyverse", "readxl", "ggplot2", "sf", "tmap", "tmaptools", "devtools")
