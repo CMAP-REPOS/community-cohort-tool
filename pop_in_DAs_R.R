@@ -41,6 +41,6 @@ test <- st_interpolate_aw(DAs2 %>% select(-DA_EDAcomb, -area), cen20blocks2, ext
 
 
 #quickplot of a layer
-ggplot(data = munis) + geom_sf()
+ggplot(data = test) + geom_sf()
 
 
