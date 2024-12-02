@@ -329,6 +329,7 @@ MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
   mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>% # score averaging happens HERE
   select(-starts_with("SCORE_YEAR"))
 
+## ///// maybe add section to recalculate cohort cuts HERE //////
 
 # CCAs
 
