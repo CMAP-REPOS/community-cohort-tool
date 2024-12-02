@@ -1,0 +1,26 @@
+{
+    "id": "A9507173",
+    "path": "~/github_repos/community-cohort-tool/community_cohort_tool.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "1914857725",
+    "contents": "",
+    "dirty": false,
+    "created": 1732141397030.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "144,23",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1721677196,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1721677196,
+    "read_only": false,
+    "read_only_alternatives": []
+}

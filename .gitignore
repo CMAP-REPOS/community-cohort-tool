@@ -1,9 +1,0 @@
-.DS_Store
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-packrat/lib*/
-output/memo/
-output/archive/*
-input/archive/*

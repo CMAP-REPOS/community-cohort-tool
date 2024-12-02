@@ -1,0 +1,68 @@
+GEOID,MUNI,WEIGHTED_SCORE_3YR,COHORT_3YR,old_cohort,score_change,abs_change,direction
+14,Albany Park,46.29629629629631,2,3,-1,1,Lower need after change
+34,Armour Square,37.96296296296297,3,4,-1,1,Lower need after change
+45,Avalon Park,33.33333333333332,4,2,2,2,Higher need after change
+60,Bridgeport,52.77777777777779,2,3,-1,1,Lower need after change
+44,Chatham,31.481481481481485,4,3,1,1,Higher need after change
+37,Fuller Park,37.03703703703704,3,4,-1,1,Lower need after change
+38,Grand Boulevard,37.03703703703704,3,4,-1,1,Lower need after change
+55,Hegewisch,40.74074074074076,3,4,-1,1,Lower need after change
+39,Kenwood,52.7777777777778,2,3,-1,1,Lower need after change
+22,Logan Square,72.22222222222221,1,2,-1,1,Lower need after change
+31,Lower West Side,50.925925925925924,2,4,-2,2,Lower need after change
+59,McKinley Park,43.51851851851854,3,4,-1,1,Lower need after change
+74,Mount Greenwood,75,1,2,-1,1,Lower need after change
+13,North Park,41.666666666666664,3,2,1,1,Higher need after change
+36,Oakland,37.03703703703704,3,4,-1,1,Lower need after change
+73,Washington Heights,38.88888888888889,3,4,-1,1,Lower need after change
+62,West Elsdon,39.81481481481483,3,4,-1,1,Lower need after change
+65,West Lawn,39.81481481481482,3,4,-1,1,Lower need after change
+2,West Ridge,35.18518518518517,4,3,1,1,Higher need after change
+1704303,Beach Park,38.88888888888889,3,2,1,1,Higher need after change
+1704572,Bedford Park,57.407407407407426,2,1,1,1,Higher need after change
+1705404,Berkeley,33.33333333333335,4,3,1,1,Higher need after change
+1705573,Berwyn,44.44444444444445,3,4,-1,1,Lower need after change
+1706587,Bloomingdale,63.888888888888886,2,1,1,1,Higher need after change
+1708225,Bridgeview,44.44444444444443,3,2,1,1,Higher need after change
+1708446,Broadview,47.22222222222221,2,4,-2,2,Lower need after change
+1708576,Brookfield,58.333333333333314,2,3,-1,1,Lower need after change
+1709642,Burbank,53.70370370370372,2,3,-1,1,Lower need after change
+1711358,Carpentersville,55.555555555555564,2,3,-1,1,Lower need after change
+1714065,Chicago Ridge,34.25925925925926,4,3,1,1,Higher need after change
+1716691,Country Club Hills,32.407407407407426,4,3,1,1,Higher need after change
+1717458,Crest Hill,44.44444444444442,3,2,1,1,Higher need after change
+1717523,Crete,44.44444444444446,3,2,1,1,Higher need after change
+1719642,Des Plaines,62.96296296296297,2,1,1,1,Higher need after change
+1724634,Evergreen Park,66.66666666666669,1,2,-1,1,Lower need after change
+1727442,Fox Lake,41.66666666666665,3,2,1,1,Higher need after change
+1732200,Hainesville,50,2,3,-1,1,Lower need after change
+1732746,Hanover Park,66.66666666666669,1,2,-1,1,Lower need after change
+1733331,Harvard,37.03703703703701,3,4,-1,1,Lower need after change
+1734865,Highwood,51.851851851851855,2,4,-2,2,Lower need after change
+1735086,Hillside,42.59259259259259,3,2,1,1,Higher need after change
+1735385,Hodgkins,36.11111111111112,4,2,2,2,Higher need after change
+1742028,Lansing,27.7777777777778,4,3,1,1,Higher need after change
+1745564,McCook,39.81481481481482,3,2,1,1,Higher need after change
+1748554,Merrionette Park,16.66666666666669,4,3,1,1,Higher need after change
+1748671,Mettawa,49.99999999999999,2,1,1,1,Higher need after change
+1748892,Midlothian,23.14814814814814,4,3,1,1,Higher need after change
+1751349,Mundelein,62.962962962962955,2,1,1,1,Higher need after change
+1754144,North Riverside,41.66666666666664,3,2,1,1,Higher need after change
+1763641,Richmond,32.407407407407426,4,3,1,1,Higher need after change
+1763706,Richton Park,46.29629629629628,2,3,-1,1,Lower need after change
+1764343,River Grove,41.666666666666664,3,4,-1,1,Lower need after change
+1764902,Rockdale,20.37037037037035,4,2,2,2,Higher need after change
+1765819,Rosemont,34.25925925925924,4,2,2,2,Higher need after change
+1766027,Round Lake,52.77777777777779,2,3,-1,1,Lower need after change
+1766040,Round Lake Beach,51.85185185185188,2,3,-1,1,Lower need after change
+1768081,Schiller Park,36.111111111111114,4,2,2,2,Higher need after change
+1770122,Skokie,59.25925925925926,2,1,1,1,Higher need after change
+1773157,Streamwood,65.74074074074073,1,2,-1,1,Lower need after change
+1775185,Thornton,20.37037037037037,4,3,1,1,Higher need after change
+1776935,University Park,42.59259259259262,3,4,-1,1,Lower need after change
+1779293,Waukegan,41.666666666666664,3,4,-1,1,Lower need after change
+1780047,Westchester,65.74074074074076,1,2,-1,1,Lower need after change
+1780645,Westmont,64.8148148148148,2,1,1,1,Higher need after change
+1782686,Winthrop Harbor,47.22222222222221,2,4,-2,2,Lower need after change
+1782985,Wood Dale,49.074074074074076,2,1,1,1,Higher need after change
+1783518,Worth,30.55555555555557,4,3,1,1,Higher need after change
