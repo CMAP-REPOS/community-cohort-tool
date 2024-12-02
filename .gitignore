@@ -7,3 +7,4 @@ packrat/lib*/
 output/memo/
 output/archive/*
 input/archive/*
+/output/DA_only
