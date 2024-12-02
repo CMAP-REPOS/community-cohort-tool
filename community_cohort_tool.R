@@ -316,24 +316,19 @@ MUNI_CURRENTYR <- FACTORS_MUNI %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
-MUNI_SCORES_YEAR1 <- paste0("output/1yr/cohort_assignments_muni_1yr_", COHORT_YEAR - 2, ".csv") %>%
-  read_csv() %>%
-  select(GEOID, SCORE_YEAR1 = WEIGHTED_SCORE)
+MUNI_SCORES_YEAR1 <- FACTORS_MUNI_23 %>%
+  select(GEOID, SCORE_YEAR1 = SCORE_OVERALL_SCALED)
 
-MUNI_SCORES_YEAR2 <- paste0("output/1yr/cohort_assignments_muni_1yr_", COHORT_YEAR - 1, ".csv") %>%
-  read_csv() %>%
-  select(GEOID, SCORE_YEAR2 = WEIGHTED_SCORE)
+MUNI_SCORES_YEAR2 <- FACTORS_MUNI_22 %>%
+  select(GEOID, SCORE_YEAR2 = SCORE_OVERALL_SCALED)
 
 MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
   select(GEOID, MUNI, SCORE_YEAR3 = WEIGHTED_SCORE) %>%
   left_join(MUNI_SCORES_YEAR2) %>%
   left_join(MUNI_SCORES_YEAR1) %>%
-  mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>%
+  mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>% # score averaging happens HERE
   select(-starts_with("SCORE_YEAR"))
 
-MUNI_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(MUNI_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-MUNI_SCORES_3YR_AVG <- MUNI_SCORES_3YR_AVG %>%
-  mutate(COHORT_3YR = fct_relevel(COHORT_3YR, sort))
 
 # CCAs
 
