@@ -338,13 +338,11 @@ CCA_CURRENTYR <- FACTORS_CCA %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
-CCA_SCORES_YEAR1 <- paste0("output/1yr/cohort_assignments_cca_1yr_", COHORT_YEAR - 2, ".csv") %>%
-  read_csv() %>%
-  select(CCA_ID, SCORE_YEAR1 = WEIGHTED_SCORE)
+CCA_SCORES_YEAR1 <- FACTORS_CCA_23 %>%
+  select(CCA_ID, SCORE_YEAR1 = SCORE_OVERALL_SCALED)
 
-CCA_SCORES_YEAR2 <- paste0("output/1yr/cohort_assignments_cca_1yr_", COHORT_YEAR - 1, ".csv") %>%
-  read_csv() %>%
-  select(CCA_ID, SCORE_YEAR2 = WEIGHTED_SCORE)
+CCA_SCORES_YEAR2 <- FACTORS_CCA_22 %>%
+  select(CCA_ID, SCORE_YEAR2 = SCORE_OVERALL_SCALED)
 
 CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
   select(CCA_ID, CCA_NAME, SCORE_YEAR3 = WEIGHTED_SCORE) %>%
@@ -352,10 +350,6 @@ CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
   left_join(CCA_SCORES_YEAR1) %>%
   mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>%
   select(-starts_with("SCORE_YEAR"))
-
-CCA_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(CCA_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
-  mutate(COHORT_3YR = fct_relevel(COHORT_3YR, sort))
 
 ############## PART 3: PLOT AND MAP SCORES
 
