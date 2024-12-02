@@ -329,6 +329,10 @@ MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
   mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>% # score averaging happens HERE
   select(-starts_with("SCORE_YEAR"))
 
+MUNI_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(MUNI_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+MUNI_SCORES_3YR_AVG <- MUNI_SCORES_3YR_AVG %>%
+  mutate(COHORT_3YR = fct_relevel(COHORT_3YR, sort))
+
 ## ///// maybe add section to recalculate cohort cuts HERE //////
 
 # CCAs
@@ -350,6 +354,10 @@ CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
   left_join(CCA_SCORES_YEAR1) %>%
   mutate(WEIGHTED_SCORE_3YR = (SCORE_YEAR1 + SCORE_YEAR2 + SCORE_YEAR3) / 3) %>%
   select(-starts_with("SCORE_YEAR"))
+
+CCA_SCORES_3YR_AVG$COHORT_3YR <- cut(as.vector(CCA_SCORES_3YR_AVG$WEIGHTED_SCORE_3YR), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
+  mutate(COHORT_3YR = fct_relevel(COHORT_3YR, sort))
 
 ############## PART 3: PLOT AND MAP SCORES
 
