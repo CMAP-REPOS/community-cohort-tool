@@ -9,3 +9,5 @@ output/archive/*
 input/archive/*
 /output/DA_only
 /output
+community-cohort-tool.Rproj
+Rplots.pdf
