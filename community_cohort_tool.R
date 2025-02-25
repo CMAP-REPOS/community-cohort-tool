@@ -316,8 +316,8 @@ MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
   select(-starts_with("SCORE_YEAR"))
 
 # calculate new cohort cuts (maintain the same # of communities in each cohort)
-# { start
-prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv")
+# { start inspection of previous years' output
+prev_muni_csv <- paste0("output/3yr/cohort_assignments_muni_3yr_", COHORT_YEAR - 3, "_", COHORT_YEAR-1, ".csv")
 PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT_3YR=col_character())) %>%
   rename(
     SCORE_PREV = WEIGHTED_SCORE_3YR,
@@ -328,8 +328,11 @@ PREV_SCORES_MUNI <- read_csv(prev_muni_csv, col_types=cols(COHORT_3YR=col_charac
 PREV_COHORT_SHARE <- PREV_SCORES_MUNI %>% group_by(COHORT_PREV) %>% summarize(cnt = n()) %>%
   mutate(freq = round(cnt/sum(cnt), 3))
 
+PREV_COHORT_SHARE #inspect!
+
 NEW_COHORTCUTS <- tibble(c("4", "3", "2", "1"),
-                         c(26, 38, 55, 100)) # derived from manual inspection of MUNI_SCORES_3YR_AVG
+                         c(26, 36, 55, 100)) # derived from manual inspection of MUNI_SCORES_3YR_AVG and PREV_COHORT_SHARE
+                                              # 2024: 26, 38, 55, 100
 names(NEW_COHORTCUTS) <- c("COHORT", "MAX_SCORE")
 # } end
 
@@ -344,10 +347,10 @@ CCA_CURRENTYR <- FACTORS_CCA %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
-CCA_SCORES_YEAR1 <- FACTORS_CCA_23 %>%
+CCA_SCORES_YEAR1 <- FACTORS_CCA_prev %>%
   select(CCA_ID, SCORE_YEAR1 = SCORE_OVERALL_SCALED)
 
-CCA_SCORES_YEAR2 <- FACTORS_CCA_22 %>%
+CCA_SCORES_YEAR2 <- FACTORS_CCA_prevprev %>%
   select(CCA_ID, SCORE_YEAR2 = SCORE_OVERALL_SCALED)
 
 CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
@@ -359,7 +362,7 @@ CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
 
 # calculate new cohort cuts (maintain the same # of communities in each cohort)
 # { start
-prev_cca_csv <- paste0("output/3yr/cohort_assignments_cca_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv")
+prev_cca_csv <- paste0("output/3yr/cohort_assignments_cca_3yr_", COHORT_YEAR - 3, "_", COHORT_YEAR-1, ".csv")
 PREV_SCORES_CCA <- read_csv(prev_cca_csv, col_types=cols(COHORT_3YR=col_character())) %>%
   rename(
     SCORE_PREV = WEIGHTED_SCORE_3YR,
@@ -370,8 +373,11 @@ PREV_SCORES_CCA <- read_csv(prev_cca_csv, col_types=cols(COHORT_3YR=col_characte
 PREV_COHORT_SHARE <- PREV_SCORES_CCA %>% group_by(COHORT_PREV) %>% summarize(cnt = n()) %>%
   mutate(freq = round(cnt/sum(cnt), 3))
 
+PREV_COHORT_SHARE #inspect!
+
 NEW_COHORTCUTS_CCAs <- tibble(c("4", "3", "2", "1"),
-                              c(42, 47, 65, 100)) # derived from manual inspection of MUNI_SCORES_3YR_AVG
+                              c(40, 45, 62, 100)) # derived from manual inspection of MUNI_SCORES_3YR_AVG
+                                                  # 2024: 42, 47, 65, 100
 names(NEW_COHORTCUTS_CCAs) <- c("COHORT", "MAX_SCORE")
 # } end
 
@@ -462,11 +468,11 @@ CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
 
 # Write output files (1-year version) -------------------------------------
 
-write_csv(MUNI_CURRENTYR, paste0("output/1yr/cohort_assignments_muni_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
+#write_csv(MUNI_CURRENTYR, paste0("output/1yr/cohort_assignments_muni_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
 
 write_csv(MUNI_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_muni_noPCTEDAPOP_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
 
-write_csv(CCA_CURRENTYR, paste0("output/1yr/cohort_assignments_cca_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
+#write_csv(CCA_CURRENTYR, paste0("output/1yr/cohort_assignments_cca_noPCTEDAPOP_1yr_", COHORT_YEAR, ".csv"))
 
 write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_noPCTEDAPOP_3yr_", COHORT_YEAR - 2, "_", COHORT_YEAR, ".csv"))
 
