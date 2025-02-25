@@ -26,8 +26,8 @@ library(cmapplot)
 library(cmapgeo)
 apply_cmap_default_aes()
 
-COHORT_YEAR <- 2024  # Update this each year!
-IN_XLSX <- "input/community_cohort_inputs_2024.xlsx"  # Spreadsheet containing latest data
+COHORT_YEAR <- 2025  # Update this each year!
+IN_XLSX <- paste0("input/community_cohort_inputs_", COHORT_YEAR, ".xlsx")  # Spreadsheet containing latest data
 
 
 # Load input factors, weights and cohort thresholds -----------------------
@@ -59,7 +59,7 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
-# Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
+# Force equal intervals and midpoint of 0.5 for PCT_DA_POP factor
 WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_DA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
 
 
@@ -125,7 +125,7 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   )
 }
 
-# Calculate 1-yr score & 1-yr cohort for 2024 ---------------------------------
+# Calculate 1-yr score & 1-yr cohort for 2025 ---------------------------------
 
 FACTORS_MUNI$SCORE_OVERALL <- rowSums(FACTORS_MUNI[, wt_score_cols])
 FACTORS_CCA$SCORE_OVERALL <- rowSums(FACTORS_CCA[, wt_score_cols])
@@ -146,20 +146,20 @@ FACTORS_CCA$COHORT <- cut(as.vector(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, C
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
-# Recalculate scores for 2023 --------------
+# Recalculate scores for previous year --------------
 
-input_23 <- "input/community_cohort_inputs_2023.xlsx"
+input_prev <- paste0("input/community_cohort_inputs_", COHORT_YEAR-1, ".xlsx")
 
-FACTORS_MUNI_23 <- read_xlsx(input_23, sheet="FACTORS_MUNI")
-FACTORS_CCA_23 <- read_xlsx(input_23, sheet="FACTORS_CCA")
+FACTORS_MUNI_prev <- read_xlsx(input_prev, sheet="FACTORS_MUNI")
+FACTORS_CCA_prev <- read_xlsx(input_prev, sheet="FACTORS_CCA")
 
-COHORTS <- read_xlsx(input_23, sheet="COHORTS")
+COHORTS <- read_xlsx(input_prev, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
-WEIGHTS <- read_xlsx(input_23, sheet="WEIGHTS")
+WEIGHTS <- read_xlsx(input_prev, sheet="WEIGHTS")
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI_23[, WEIGHTS$FACTOR_NAME], median)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI_23[, WEIGHTS$FACTOR_NAME], sd)[1,])
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI_prev[, WEIGHTS$FACTOR_NAME], median)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI_prev[, WEIGHTS$FACTOR_NAME], sd)[1,])
 
 WEIGHTS <- WEIGHTS %>%
   mutate(
@@ -176,10 +176,13 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
+# Force equal intervals and midpoint of 0.5 for PCT_DA_POP factor
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_DA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
+
 keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
 keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
-FACTORS_MUNI_23 <- FACTORS_MUNI_23[, keep_cols_muni]
-FACTORS_CCA_23 <- FACTORS_CCA_23[, keep_cols_cca]
+FACTORS_MUNI_prev <- FACTORS_MUNI_prev[, keep_cols_muni]
+FACTORS_CCA_prev <- FACTORS_CCA_prev[, keep_cols_cca]
 
 score_cols <- c()
 wt_score_cols <- c()
@@ -196,50 +199,50 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   cuts <- WEIGHTS[WEIGHTS$FACTOR_NAME==factor,] %>%
     select(starts_with("CUT"))
   groups <- c(1:10)
-  FACTORS_MUNI_23[, score_col] <- cut(as.matrix(FACTORS_MUNI_23[, factor]), cuts, groups, labels=FALSE)
-  FACTORS_CCA_23[, score_col] <- cut(as.matrix(FACTORS_CCA_23[, factor]), cuts, groups, labels=FALSE)
+  FACTORS_MUNI_prev[, score_col] <- cut(as.matrix(FACTORS_MUNI_prev[, factor]), cuts, groups, labels=FALSE)
+  FACTORS_CCA_prev[, score_col] <- cut(as.matrix(FACTORS_CCA_prev[, factor]), cuts, groups, labels=FALSE)
   if (weight < 0) {
     # Reverse score order for factors with negative weights
-    FACTORS_MUNI_23[, score_col] <-  max(groups) + 1 - FACTORS_MUNI_23[, score_col]
-    FACTORS_CCA_23[, score_col] <-  max(groups) + 1 - FACTORS_CCA_23[, score_col]
+    FACTORS_MUNI_prev[, score_col] <-  max(groups) + 1 - FACTORS_MUNI_prev[, score_col]
+    FACTORS_CCA_prev[, score_col] <-  max(groups) + 1 - FACTORS_CCA_prev[, score_col]
   }
-  FACTORS_MUNI_23[, wt_score_col] <- FACTORS_MUNI_23[, score_col] * abs(weight)
-  FACTORS_CCA_23[, wt_score_col] <- FACTORS_CCA_23[, score_col] * abs(weight)
+  FACTORS_MUNI_prev[, wt_score_col] <- FACTORS_MUNI_prev[, score_col] * abs(weight)
+  FACTORS_CCA_prev[, wt_score_col] <- FACTORS_CCA_prev[, score_col] * abs(weight)
 }
 
-FACTORS_MUNI_23$SCORE_OVERALL <- rowSums(FACTORS_MUNI_23[, wt_score_cols])
-FACTORS_CCA_23$SCORE_OVERALL <- rowSums(FACTORS_CCA_23[, wt_score_cols])
+FACTORS_MUNI_prev$SCORE_OVERALL <- rowSums(FACTORS_MUNI_prev[, wt_score_cols])
+FACTORS_CCA_prev$SCORE_OVERALL <- rowSums(FACTORS_CCA_prev[, wt_score_cols])
 
 min_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 1
 max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
-FACTORS_MUNI_23 <- FACTORS_MUNI_23 %>%
+FACTORS_MUNI_prev <- FACTORS_MUNI_prev %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_MUNI_23$COHORT <- cut(as.vector(FACTORS_MUNI_23$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_MUNI_23 <- FACTORS_MUNI_23 %>%
+FACTORS_MUNI_prev$COHORT <- cut(as.vector(FACTORS_MUNI_prev$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_MUNI_prev <- FACTORS_MUNI_prev %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
-FACTORS_CCA_23 <- FACTORS_CCA_23 %>%
+FACTORS_CCA_prev <- FACTORS_CCA_prev %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_CCA_23$COHORT <- cut(as.vector(FACTORS_CCA_23$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_CCA_23 <- FACTORS_CCA_23 %>%
+FACTORS_CCA_prev$COHORT <- cut(as.vector(FACTORS_CCA_prev$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_CCA_prev <- FACTORS_CCA_prev %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
 
-# Repeat for 2022 ---------------------------
+# Repeat for the year before the last year ---------------------------
 
-input_22 <- "input/community_cohort_inputs_2022.xlsx"
+input_prevprev <- paste0("input/community_cohort_inputs_", COHORT_YEAR-2, ".xlsx")
 
-FACTORS_MUNI_22 <- read_xlsx(input_22, sheet="FACTORS_MUNI")
-FACTORS_CCA_22 <- read_xlsx(input_22, sheet="FACTORS_CCA")
+FACTORS_MUNI_prevprev <- read_xlsx(input_prevprev, sheet="FACTORS_MUNI")
+FACTORS_CCA_prevprev <- read_xlsx(input_prevprev, sheet="FACTORS_CCA")
 
-COHORTS <- read_xlsx(input_22, sheet="COHORTS")
+COHORTS <- read_xlsx(input_prevprev, sheet="COHORTS")
 COHORTS$COHORT <- as.character(COHORTS$COHORT)
 
-WEIGHTS <- read_xlsx(input_22, sheet="WEIGHTS")
+WEIGHTS <- read_xlsx(input_prevprev, sheet="WEIGHTS")
 
-WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI_22[, WEIGHTS$FACTOR_NAME], median)[1,])
-WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI_22[, WEIGHTS$FACTOR_NAME], sd)[1,])
+WEIGHTS$MED <- unlist(summarize_all(FACTORS_MUNI_prevprev[, WEIGHTS$FACTOR_NAME], median)[1,])
+WEIGHTS$SD <- unlist(summarize_all(FACTORS_MUNI_prevprev[, WEIGHTS$FACTOR_NAME], sd)[1,])
 
 WEIGHTS <- WEIGHTS %>%
   mutate(
@@ -256,10 +259,13 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
+# Force equal intervals and midpoint of 0.5 for PCT_DA_POP factor
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_DA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
+
 keep_cols_muni <- append(c("GEOID", "MUNI"), WEIGHTS$FACTOR_NAME)
 keep_cols_cca <- append(c("CCA_ID", "CCA_NAME"), WEIGHTS$FACTOR_NAME)
-FACTORS_MUNI_22 <- FACTORS_MUNI_22[, keep_cols_muni]
-FACTORS_CCA_22 <- FACTORS_CCA_22[, keep_cols_cca]
+FACTORS_MUNI_prevprev <- FACTORS_MUNI_prevprev[, keep_cols_muni]
+FACTORS_CCA_prevprev <- FACTORS_CCA_prevprev[, keep_cols_cca]
 
 score_cols <- c()
 wt_score_cols <- c()
@@ -276,33 +282,33 @@ for (factor in unlist(WEIGHTS[WEIGHTS$WEIGHT!=0, "FACTOR_NAME"])) {
   cuts <- WEIGHTS[WEIGHTS$FACTOR_NAME==factor,] %>%
     select(starts_with("CUT"))
   groups <- c(1:10)
-  FACTORS_MUNI_22[, score_col] <- cut(as.matrix(FACTORS_MUNI_22[, factor]), cuts, groups, labels=FALSE)
-  FACTORS_CCA_22[, score_col] <- cut(as.matrix(FACTORS_CCA_22[, factor]), cuts, groups, labels=FALSE)
+  FACTORS_MUNI_prevprev[, score_col] <- cut(as.matrix(FACTORS_MUNI_prevprev[, factor]), cuts, groups, labels=FALSE)
+  FACTORS_CCA_prevprev[, score_col] <- cut(as.matrix(FACTORS_CCA_prevprev[, factor]), cuts, groups, labels=FALSE)
   if (weight < 0) {
     # Reverse score order for factors with negative weights
-    FACTORS_MUNI_22[, score_col] <-  max(groups) + 1 - FACTORS_MUNI_22[, score_col]
-    FACTORS_CCA_22[, score_col] <-  max(groups) + 1 - FACTORS_CCA_22[, score_col]
+    FACTORS_MUNI_prevprev[, score_col] <-  max(groups) + 1 - FACTORS_MUNI_prevprev[, score_col]
+    FACTORS_CCA_prevprev[, score_col] <-  max(groups) + 1 - FACTORS_CCA_prevprev[, score_col]
   }
-  FACTORS_MUNI_22[, wt_score_col] <- FACTORS_MUNI_22[, score_col] * abs(weight)
-  FACTORS_CCA_22[, wt_score_col] <- FACTORS_CCA_22[, score_col] * abs(weight)
+  FACTORS_MUNI_prevprev[, wt_score_col] <- FACTORS_MUNI_prevprev[, score_col] * abs(weight)
+  FACTORS_CCA_prevprev[, wt_score_col] <- FACTORS_CCA_prevprev[, score_col] * abs(weight)
 }
 
-FACTORS_MUNI_22$SCORE_OVERALL <- rowSums(FACTORS_MUNI_22[, wt_score_cols])
-FACTORS_CCA_22$SCORE_OVERALL <- rowSums(FACTORS_CCA_22[, wt_score_cols])
+FACTORS_MUNI_prevprev$SCORE_OVERALL <- rowSums(FACTORS_MUNI_prevprev[, wt_score_cols])
+FACTORS_CCA_prevprev$SCORE_OVERALL <- rowSums(FACTORS_CCA_prevprev[, wt_score_cols])
 
 min_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 1
 max_wt_score <- sum(abs(WEIGHTS$WEIGHT)) * 10
 
-FACTORS_MUNI_22 <- FACTORS_MUNI_22 %>%
+FACTORS_MUNI_prevprev <- FACTORS_MUNI_prevprev %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_MUNI_22$COHORT <- cut(as.vector(FACTORS_MUNI_22$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_MUNI_22 <- FACTORS_MUNI_22 %>%
+FACTORS_MUNI_prevprev$COHORT <- cut(as.vector(FACTORS_MUNI_prevprev$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_MUNI_prevprev <- FACTORS_MUNI_prevprev %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
-FACTORS_CCA_22 <- FACTORS_CCA_22 %>%
+FACTORS_CCA_prevprev <- FACTORS_CCA_prevprev %>%
   mutate(SCORE_OVERALL_SCALED = (SCORE_OVERALL - min_wt_score) / (max_wt_score - min_wt_score) * 100)
-FACTORS_CCA_22$COHORT <- cut(as.vector(FACTORS_CCA_22$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
-FACTORS_CCA_22 <- FACTORS_CCA_22 %>%
+FACTORS_CCA_prevprev$COHORT <- cut(as.vector(FACTORS_CCA_prevprev$SCORE_OVERALL_SCALED), c(-Inf, COHORTS$MAX_SCORE), COHORTS$COHORT)
+FACTORS_CCA_prevprev <- FACTORS_CCA_prevprev %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
 
@@ -316,10 +322,10 @@ MUNI_CURRENTYR <- FACTORS_MUNI %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
-MUNI_SCORES_YEAR1 <- FACTORS_MUNI_23 %>%
+MUNI_SCORES_YEAR1 <- FACTORS_MUNI_prev %>%
   select(GEOID, SCORE_YEAR1 = SCORE_OVERALL_SCALED)
 
-MUNI_SCORES_YEAR2 <- FACTORS_MUNI_22 %>%
+MUNI_SCORES_YEAR2 <- FACTORS_MUNI_prevprev %>%
   select(GEOID, SCORE_YEAR2 = SCORE_OVERALL_SCALED)
 
 MUNI_SCORES_3YR_AVG <- MUNI_CURRENTYR %>%
@@ -342,10 +348,10 @@ CCA_CURRENTYR <- FACTORS_CCA %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
-CCA_SCORES_YEAR1 <- FACTORS_CCA_23 %>%
+CCA_SCORES_YEAR1 <- FACTORS_CCA_prev %>%
   select(CCA_ID, SCORE_YEAR1 = SCORE_OVERALL_SCALED)
 
-CCA_SCORES_YEAR2 <- FACTORS_CCA_22 %>%
+CCA_SCORES_YEAR2 <- FACTORS_CCA_prevprev %>%
   select(CCA_ID, SCORE_YEAR2 = SCORE_OVERALL_SCALED)
 
 CCA_SCORES_3YR_AVG <- CCA_CURRENTYR %>%
