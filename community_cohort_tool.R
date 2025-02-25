@@ -13,7 +13,7 @@ library(cmapplot)
 library(cmapgeo)
 apply_cmap_default_aes()
 
-COHORT_YEAR <- 2024  # Update this each year!
+COHORT_YEAR <- 2025  # Update this each year!
 IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
 
 
