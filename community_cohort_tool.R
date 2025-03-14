@@ -14,7 +14,7 @@ library(cmapgeo)
 apply_cmap_default_aes()
 
 COHORT_YEAR <- 2025  # Update this each year!
-IN_XLSX <- "input/community_cohort_inputs.xlsx"  # Spreadsheet containing latest data
+IN_XLSX <- "input/community_cohort_inputs_2025_DAonly.xlsx"  # Spreadsheet containing latest data
 
 
 # Load input factors, weights and cohort thresholds -----------------------
@@ -46,8 +46,8 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
-# Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
-WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
+# Force equal intervals and midpoint of 0.5 for PCT_DA_POP factor
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_DA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
 
 
 ############## PART 2: CALCULATE SCORES
@@ -133,7 +133,22 @@ FACTORS_CCA$COHORT <- cut(as.vector(FACTORS_CCA$SCORE_OVERALL_SCALED), c(-Inf, C
 FACTORS_CCA <- FACTORS_CCA %>%
   mutate(COHORT = fct_relevel(COHORT, sort))
 
+
+
+
+
+
+
+
+
+
+
+
+
 # Calculate 3-year average scores and reassign cohorts --------------------
+# NOTE: this section pulls in 2024 and 2023 1-year outputs
+# that include the %_POP_EDA (EDA or DA) factors
+  # (these tables were manually copied over from past GitHub releases)
 
 # Munis
 
@@ -191,77 +206,77 @@ CCA_SCORES_3YR_AVG <- CCA_SCORES_3YR_AVG %>%
 
 # Plot distribution of cohorts (1 yr only) ---------------------------------------
 
-bin_width = 100 / (max_wt_score - min_wt_score)
-bin_center = bin_width / 2
-
-ggplot(FACTORS_MUNI) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
-                 binwidth=bin_width, center=bin_center) +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(title="Distribution of one year scores (municipalities)") +
-  theme_cmap(hline=0, ylab="Number of municipalities") +
-  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
-                    breaks=c("1", "2", "3", "4"),
-                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
-
-
-
-chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
-ggplot(FACTORS_CCA) +
-  geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
-                 binwidth=bin_width, center=bin_center) +
-  geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
-  scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
-  labs(title="Distribution of one year scores (CCAs)",
-       caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
-  theme_cmap(hline=0, ylab="Number of CCAs") +
-  scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
-                    breaks=c("1", "2", "3", "4"),
-                    labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+# bin_width = 100 / (max_wt_score - min_wt_score)
+# bin_center = bin_width / 2
+#
+# ggplot(FACTORS_MUNI) +
+#   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+#                  binwidth=bin_width, center=bin_center) +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   labs(title="Distribution of one year scores (municipalities)") +
+#   theme_cmap(hline=0, ylab="Number of municipalities") +
+#   scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+#                     breaks=c("1", "2", "3", "4"),
+#                     labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
+#
+#
+#
+# chi_overall <- FACTORS_MUNI[FACTORS_MUNI$MUNI=="Chicago", "SCORE_OVERALL_SCALED"][[1]]
+# ggplot(FACTORS_CCA) +
+#   geom_histogram(aes(x=SCORE_OVERALL_SCALED, fill=COHORT), color="#222222", size=0.3,
+#                  binwidth=bin_width, center=bin_center) +
+#   geom_vline(linetype="dashed", xintercept=chi_overall, size=0.5, color="#222222") +
+#   scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10)) +
+#   labs(title="Distribution of one year scores (CCAs)",
+#        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
+#   theme_cmap(hline=0, ylab="Number of CCAs") +
+#   scale_fill_manual(values=c(`1`="#70d5ea", `2`="#efa971", `3`="#b6d979", `4`="#c2add6"),
+#                     breaks=c("1", "2", "3", "4"),
+#                     labels=c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4"))
 
 # Map distribution of cohorts (1 yr only) ---------------------------------------------------------
-
-tmap_mode("plot")  # "plot" (static) or "view" (interactive)
-
-cnty_geo <- filter(county_sf, cmap)
-
-muni_geo <- municipality_sf %>%
-  mutate(GEOID_n = as.integer(geoid_place)) %>%
-  left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
-  mutate(COHORT_n = as.integer(COHORT))
-
-# muni_labels <- muni_geo %>%
-#   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
-
-cca_geo <- cca_sf %>%
-  left_join(FACTORS_CCA, by=c("cca_num"="CCA_ID")) %>%
-  mutate(COHORT_n = as.integer(COHORT))
-
-tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
-  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-tm_shape(cnty_geo) +
-  tm_borders(col="#888888", lwd=2) +
-# tm_shape(muni_labels) +
-#   tm_text("MUNI", size=0.7, col="#000000") +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned 1-year cohorts (municipalities)", frame=FALSE,
-          fontface=get_cmapplot_global("font$strong$face"),
-          fontfamily=get_cmapplot_global("font$strong$family"),
-          legend.text.fontface=get_cmapplot_global("font$regular$face"),
-          legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
-
-tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
-  tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-              palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
-              labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
-tm_legend(legend.position=c("left", "bottom")) +
-tm_layout(title="Assigned 1-year cohorts (CCAs)", frame=FALSE,
-          fontface=get_cmapplot_global("font$strong$face"),
-          fontfamily=get_cmapplot_global("font$strong$family"),
-          legend.text.fontface=get_cmapplot_global("font$regular$face"),
-          legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+#
+# tmap_mode("plot")  # "plot" (static) or "view" (interactive)
+#
+# cnty_geo <- filter(county_sf, cmap)
+#
+# muni_geo <- municipality_sf %>%
+#   mutate(GEOID_n = as.integer(geoid_place)) %>%
+#   left_join(FACTORS_MUNI, by=c("GEOID_n"="GEOID")) %>%
+#   mutate(COHORT_n = as.integer(COHORT))
+#
+# # muni_labels <- muni_geo %>%
+# #   filter(MUNI %in% c("Chicago", "Joliet", "Aurora", "Elgin", "Waukegan"))  # Label select munis
+#
+# cca_geo <- cca_sf %>%
+#   left_join(FACTORS_CCA, by=c("cca_num"="CCA_ID")) %>%
+#   mutate(COHORT_n = as.integer(COHORT))
+#
+# tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
+#   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+#               palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+# tm_shape(cnty_geo) +
+#   tm_borders(col="#888888", lwd=2) +
+# # tm_shape(muni_labels) +
+# #   tm_text("MUNI", size=0.7, col="#000000") +
+# tm_legend(legend.position=c("left", "bottom")) +
+# tm_layout(title="Assigned 1-year cohorts (municipalities)", frame=FALSE,
+#           fontface=get_cmapplot_global("font$strong$face"),
+#           fontfamily=get_cmapplot_global("font$strong$family"),
+#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
+#
+# tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
+#   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
+#               palette=c("#d2efa7", "#36d8ca", "#0084ac", "#310066"),
+#               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
+# tm_legend(legend.position=c("left", "bottom")) +
+# tm_layout(title="Assigned 1-year cohorts (CCAs)", frame=FALSE,
+#           fontface=get_cmapplot_global("font$strong$face"),
+#           fontfamily=get_cmapplot_global("font$strong$family"),
+#           legend.text.fontface=get_cmapplot_global("font$regular$face"),
+#           legend.text.fontfamily=get_cmapplot_global("font$regular$family"))
 
 # Plot distribution of cohorts (3 yr average) ---------------------------------------
 
