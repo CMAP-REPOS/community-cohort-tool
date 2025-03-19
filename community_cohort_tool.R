@@ -46,8 +46,8 @@ WEIGHTS <- WEIGHTS %>%
     CUT10 = Inf
   )
 
-# Force equal intervals and midpoint of 0.5 for PCT_EDA_POP factor
-WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_EDA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
+# Force equal intervals and midpoint of 0.5 for PCT_DA_POP factor
+WEIGHTS[WEIGHTS$FACTOR_NAME=="PCT_DA_POP", paste0("CUT", 1:9)] <- as.list(seq(0.1, 0.9, 0.1))
 
 
 ############## PART 2: CALCULATE SCORES
