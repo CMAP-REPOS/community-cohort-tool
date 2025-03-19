@@ -142,6 +142,10 @@ MUNI_CURRENTYR <- FACTORS_MUNI %>%
   select(GEOID, MUNI, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
 
+#MUNI_CURRENTYR_fullscoredetails <- FACTORS_MUNI %>%
+#  rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED)
+#write.csv(MUNI_CURRENTYR_fullscoredetails, "output/MUNIcurrentyr_fullscores.csv")
+
 MUNI_SCORES_YEAR1 <- paste0("output/1yr/cohort_assignments_muni_1yr_", COHORT_YEAR - 2, ".csv") %>%
   read_csv() %>%
   select(GEOID, SCORE_YEAR1 = WEIGHTED_SCORE)
@@ -167,6 +171,11 @@ CCA_CURRENTYR <- FACTORS_CCA %>%
   rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED) %>%
   select(CCA_ID, CCA_NAME, COHORT, WEIGHTED_SCORE, starts_with("SCORE_")) %>%
   select(-SCORE_OVERALL)
+
+#CCA_CURRENTYR_fullscoredetails <- FACTORS_CCA %>%
+#  rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED)
+#write.csv(CCA_CURRENTYR_fullscoredetails, "output/CCAcurrentyr_fullscores.csv")
+
 
 CCA_SCORES_YEAR1 <- paste0("output/1yr/cohort_assignments_cca_1yr_", COHORT_YEAR - 2, ".csv") %>%
   read_csv() %>%
