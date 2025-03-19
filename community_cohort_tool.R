@@ -529,7 +529,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
      TAX_BASE_PER_CAP = exp(ln_TAX_BASE_PER_CAP),
      MED_HH_INC = exp(ln_MED_HH_INC)
    ) %>%
-   select(GEOID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP)
+   select(GEOID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_DA_POP)
 
  MEMO_MUNI <- COMPARE_MUNI %>% # includes previous (3yr) cohort assignment
    mutate(
@@ -538,7 +538,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    ) %>%
    left_join(MEMO_MUNI_1YR) %>%
    select(MUNI, COHORT_NAME, PREV_COHORT_NAME, COHORT_CHG, SCORE,
-          MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
+          MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_DA_POP) %>%
    rename(
      `Community Name` = MUNI,
      `Cohort` = COHORT_NAME,
@@ -548,7 +548,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
      `Household Median Income` = MED_HH_INC,
      `Population` = POP,
      `Tax Base Per Capita` = TAX_BASE_PER_CAP,
-     `Percent of Population in EDAs` = PCT_EDA_POP
+     `Percent of Population in DAs` = PCT_DA_POP
    )
 
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
@@ -587,7 +587,7 @@ write.csv(MEMO_MUNI, paste("output/memo/_Munidata_", COHORT_YEAR, ".csv",sep="")
    left_join(read_xlsx(IN_XLSX, sheet="FACTORS_CCA") %>% select(CCA_NAME, CCA_POP), by="CCA_NAME") %>%
    rename(POP = CCA_POP) %>%
    mutate(POP = round(POP,0)) %>%
-   select(CCA_ID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP)
+   select(CCA_ID, MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_DA_POP)
 
  MEMO_CCA <- COMPARE_CCA %>%
    mutate(
@@ -596,7 +596,7 @@ write.csv(MEMO_MUNI, paste("output/memo/_Munidata_", COHORT_YEAR, ".csv",sep="")
    ) %>%
    left_join(MEMO_CCA_1YR) %>%
    select(CCA_NAME, COHORT_NAME, PREV_COHORT_NAME, COHORT_CHG, SCORE,
-          MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_EDA_POP) %>%
+          MED_HH_INC, POP, TAX_BASE_PER_CAP, PCT_DA_POP) %>%
    rename(
      `Community Name` = CCA_NAME,
      `Cohort` = COHORT_NAME,
@@ -606,7 +606,7 @@ write.csv(MEMO_MUNI, paste("output/memo/_Munidata_", COHORT_YEAR, ".csv",sep="")
      `Household Median Income` = MED_HH_INC,
      `Population` = POP,  # Using Chicago's population for each CCA to avoid cohort inflation
      `Tax Base Per Capita` = TAX_BASE_PER_CAP,  # Using hybrid of citywide retail sales per cap + local EAV per cap for CCA tax base per cap
-     `Percent of Population in EDAs` = PCT_EDA_POP
+     `Percent of Population in DAs` = PCT_DA_POP
    )
 
  for (cohort_name in c("Cohort 1", "Cohort 2", "Cohort 3", "Cohort 4")) {
