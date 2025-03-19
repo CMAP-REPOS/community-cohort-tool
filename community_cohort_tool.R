@@ -176,7 +176,6 @@ CCA_CURRENTYR <- FACTORS_CCA %>%
 #  rename(WEIGHTED_SCORE = SCORE_OVERALL_SCALED)
 #write.csv(CCA_CURRENTYR_fullscoredetails, "output/CCAcurrentyr_fullscores.csv")
 
-
 CCA_SCORES_YEAR1 <- paste0("output/1yr/cohort_assignments_cca_1yr_", COHORT_YEAR - 2, ".csv") %>%
   read_csv() %>%
   select(CCA_ID, SCORE_YEAR1 = WEIGHTED_SCORE)
