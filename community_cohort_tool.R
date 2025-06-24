@@ -366,7 +366,7 @@ tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
 
 ############## PART 4: EXPORT SCORES
 
-# Write output files (1-year version) -------------------------------------
+# Write output files (1-year and 3-year version) -------------------------------------
 
 write_csv(MUNI_CURRENTYR, paste0("output/1yr/cohort_assignments_muni_1yr_", COHORT_YEAR, ".csv"))
 
