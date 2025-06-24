@@ -482,7 +482,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
  ggplot(COMPARE_MUNI) +
    geom_histogram(aes(x=COHORT_PREV, fill="Previous"), stat="count", width=0.4, position=position_nudge(x=-0.2)) +
    geom_histogram(aes(x=COHORT, fill="Updated"), stat="count", width=0.4, position=position_nudge(x=0.2)) +
-   #labs(title="Updated vs. previous cohorts (municipalities)") +
+   labs(title="Updated vs. previous cohorts (municipalities)") +
    theme_cmap(xlab="Cohort", ylab="Number of municipalities")
 
  ggplot(COMPARE_CCA) +
