@@ -297,7 +297,7 @@ ggplot(MUNI_SCORES_3YR_AVG) +
   #scale_x_continuous(limits=c(0, 100), breaks=seq(0, 100, 10) )+
   labs(title = paste("Distribution of overall scores (municipalities) FY", COHORT_YEAR, sep="")) +
   theme_cmap(hline=0, ylab="Number of municipalities") +
-  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#B4D79E", `1`="#89CD66"),
                     breaks=c("4","3", "2","1"),
                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
@@ -310,7 +310,7 @@ ggplot(CCA_SCORES_3YR_AVG) +
   labs(title=paste("Distribution of overall scores (CCAs) FY", COHORT_YEAR, sep=""),
        caption="Note: Dashed line represents the overall score for the entire City of Chicago.") +
   theme_cmap(hline=0, ylab="Number of CCAs") +
-  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+  scale_fill_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#B4D79E", `1`="#89CD66"),
                     breaks=c("4","3", "2","1"),
                     labels=c("Cohort 4", "Cohort 3", "Cohort 2", "Cohort 1" ))
 
@@ -333,14 +333,14 @@ muni_geo <- municipality_sf %>%
 
  tm_shape(muni_geo, bbox=bb(cnty_geo, ext=1.2)) +
    tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-               palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
+               palette=c("#89CD66", "#B4D79E", "#C29ED7", "#AA66CD"),
                labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
    tm_shape(cnty_geo) +
    tm_borders(col="#888888", lwd=2) +
    # tm_shape(muni_labels) +
    #   tm_text("MUNI", size=0.7, col="#000000") +
    tm_legend(legend.position=c("left", "bottom")) +
-   tm_layout(title= paste("Assigned cohorts (municipalities) FY", COHORT_YEAR, sep=""), frame=FALSE,
+   tm_layout(title= paste0("Assigned cohorts (municipalities) FY", COHORT_YEAR, sep=""), frame=FALSE,
              fontface=get_cmapplot_global("font$strong$face"),
              fontfamily=get_cmapplot_global("font$strong$family"),
              legend.text.fontface=get_cmapplot_global("font$regular$face"),
@@ -354,7 +354,7 @@ cca_geo <- cca_sf %>%
 
 tm_shape(cca_geo, bbox=bb(cca_geo, ext=1.2)) +
   tm_polygons("COHORT_n", title="", n=4, border.col="#ffffff", lwd=0.5,
-              palette=c("#B4D79E", "#89CD66", "#C29ED7", "#AA66CD"),
+              palette=c("#89CD66", "#B4D79E", "#C29ED7", "#AA66CD"),
               labels=c("1 (low need)", "2 (moderate need)", "3 (high need)", "4 (very high need)")) +
   tm_legend(legend.position=c("left", "bottom")) +
   tm_layout(title=paste0("Assigned cohorts (CCAs) FY", COHORT_YEAR, sep=""), frame=FALSE,
@@ -443,7 +443,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
               legend.position="right", legend.direction="vertical",
               legend.title=element_text()) +
    guides(color=guide_legend(title="Updated cohort")) +
-   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#B4D79E", `1`="#89CD66"),
                      breaks=c("1","2","3","4"),
                      labels=c("1","2","3","4"))
 
@@ -467,7 +467,7 @@ write_csv(CCA_SCORES_3YR_AVG, paste0("output/3yr/cohort_assignments_cca_3yr_", C
    theme_cmap(gridlines="hv", xlab="Previous cohort", ylab="Updated cohort",
               legend.position="right", legend.direction="vertical") +
    guides(color=guide_none())  +
-   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#89CD66", `1`="#B4D79E"),
+   scale_color_manual(values=c(`4`="#AA66CD", `3`="#C29ED7", `2`="#B4D79E", `1`="#89CD66"),
                       breaks=c("1","2","3","4"),
                       labels=c("1","2","3","4"))
 
